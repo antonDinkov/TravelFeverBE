@@ -33,7 +33,7 @@ userRouter.post('/register', isGuest(),
             const token = createToken(userData);
             res.cookie('token', token);
 
-            res.status(201).json({ message: 'User registered successfully', user: userData });
+            res.status(201).json({ message: 'User registered successfully', user: userData, token });
         } catch (err) {
             console.error('Error in /register:', err);
             res.status(500).json({ errors: parseError(err).errors });
@@ -48,6 +48,7 @@ userRouter.post('/login', isGuest(),
     body('email').trim().isLength({ min: 10 }).withMessage('Email must be atleast 10 characters long'),
     body('password').trim().isLength({ min: 4 }).withMessage('Password must be atleast 4 characters long'),
     async (req, res) => {
+        console.log("🔥 LOGIN ROUTE HIT");
         try {
             const validation = validationResult(req);
             if (!validation.isEmpty()) {
@@ -68,7 +69,7 @@ userRouter.post('/login', isGuest(),
                 sameSite: 'none'
             });
 
-            res.status(200).json({ message: 'User logged in successfully', user: userData });
+            res.status(200).json({ message: 'User logged in successfully', user: userData, token });
         } catch (err) {
             res.status(500).json({ errors: parseError(err).errors });
         }
