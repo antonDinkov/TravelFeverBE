@@ -12,6 +12,7 @@ function isUser() {
 
 function isGuest() {
     return function (req, res, next) {
+        console.log("REQ.USER:", req.user);
         if (req.user) {
             res.redirect('/');
         } else {
@@ -22,6 +23,7 @@ function isGuest() {
 
 function isOwner() {
     return async function (req, res, next) {
+        
         try {
             if (!req.user) {
                 return res.redirect('/login');
