@@ -7,9 +7,22 @@ const secret = process.env.COOKIE_SECRET || 'cookie secr3t'
 
 function configExpress(app) {
     app.use(cors({
-        origin: ['http://localhost:4200', 'https://antondinkov.github.io'],
-        credentials: true
-    }));
+    origin: function (origin, callback) {
+        if (!origin) return callback(null, true); // allow React Native
+
+        const allowed = [
+            'http://localhost:4200',
+            'https://antondinkov.github.io'
+        ];
+
+        if (allowed.indexOf(origin) !== -1) {
+            callback(null, true);
+        } else {
+            callback(null, true); // allow mobile
+        }
+    },
+    credentials: true
+}));
     app.use(cookieParser(secret));
     app.use(session());
     //TODO add session middleware
