@@ -12,7 +12,6 @@ function isUser() {
 
 function isGuest() {
     return function (req, res, next) {
-        console.log("REQ.USER:", req.user);
         if (req.user) {
             res.redirect('/');
         } else {
