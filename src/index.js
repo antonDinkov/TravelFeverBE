@@ -16,7 +16,7 @@ async function start() {
     configExpress(app);
     configRoutes(app);
     
-    const PORT = process.env.PORT || 3005;
+    const PORT = process.env.PORT || 3004;
     app.listen(PORT, "0.0.0.0", () => console.log(`Server started on port ${PORT}`));
 
 };

@@ -12,13 +12,31 @@ function isUser() {
 
 function isGuest() {
     return function (req, res, next) {
+
         if (req.user) {
+            return res.status(400).json({
+                message: 'You are already logged in'
+            });
+        }
+
+        next();
+    }
+}
+
+/* function isGuest() {
+    return function (req, res, next) {
+        console.log("Inside isGuest");
+        
+        if (req.user) {
+            console.log("Inside isGuest if req.user", req.user);
             res.redirect('/');
         } else {
+            console.log("next in isGuest");
+            
             next();
         }
     }
-};
+}; */
 
 function isOwner() {
     return async function (req, res, next) {

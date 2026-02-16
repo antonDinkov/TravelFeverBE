@@ -2,7 +2,9 @@ const { verifyToken } = require("../services/jwt");
 
 function session() {
     return function (req, res, next) {
-        const token = req.cookies?.token;
+        console.log("COOKIES:", req.headers['x-authorization']);
+        const token = req.headers['x-authorization'];
+
 
         if (token) {
             try {
