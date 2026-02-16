@@ -30,7 +30,6 @@ userRouter.post('/register', isGuest(),
             const userData = await register(req.body.email, req.body.firstName, req.body.lastName, req.body.password, lat, lng);
 
             const token = createToken(userData);
-            res.cookie('token', token);
 
             res.status(201).json({ message: 'User registered successfully', user: userData, token });
         } catch (err) {
