@@ -17,7 +17,7 @@ function session() {
                 };
                 res.locals.hasUser = true;
             } catch (err) {
-                res.clearCookie('token');
+                console.log("Invalid token");
             }
         }
 
