@@ -63,6 +63,8 @@ userRouter.post('/login',
 
             const { email, password } = req.body;
 
+            console.log(email, "and ", password);
+            
             const userData = await login(email, password, lat, lng);
 
             const token = createToken(userData);
@@ -114,11 +116,6 @@ userRouter.post('/login',
 
 
 userRouter.get('/logout', isUser(), (req, res) => {
-    res.clearCookie('token', {
-        httpOnly: false,
-        secure: false,
-        sameSite: 'lax',
-    });
     res.status(200).json({ message: 'Logout successful' });
 });
 
