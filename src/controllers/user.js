@@ -63,7 +63,7 @@ userRouter.post('/login',
             const { email, password } = req.body;
 
             console.log(email, "and ", password);
-            
+
             const userData = await login(email, password, lat, lng);
 
             const token = createToken(userData);
@@ -75,7 +75,8 @@ userRouter.post('/login',
             });
 
         } catch (err) {
-            res.status(500).json({ errors: parseError(err).errors });
+            const parsed = parseError(err);
+            res.status(parsed.status || 400).json({ errors: parsed.errors });
         }
     }
 );
