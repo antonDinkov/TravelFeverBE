@@ -1,11 +1,20 @@
 const { Data } = require('../models/Data');
 const { User } = require('../models/User');
+const { Country } = require('../models/Countries');
 
 //TODO replace with real data service according to exam description
 
 async function getAll() {
     return Data.find().lean();
 };
+
+async function getFeaturedCountries() {
+  return Country
+    .find({ featured_rank: { $exists: true } })
+    .sort({ featured_rank: 1 })
+    .lean();
+}
+
 
 /* async function getLastThree() {
     return Data.find().sort({ _id: -1 }).limit(3).lean(); //последните три регистрирани продукта
@@ -216,6 +225,7 @@ async function getMostLiked() {
 module.exports = {
     getAll,
     /* getLastThree, */
+    getFeaturedCountries,
     getTopFivePlayed,
     getById,
     getByIdKey,

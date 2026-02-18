@@ -2,7 +2,7 @@ const { Router } = require("express");
 const { isUser, isOwner, hasInteracted } = require("../middlewares/guards");
 const { body, validationResult } = require("express-validator");
 const { parseError } = require("../util");
-const { create, getAll, getById, update, deleteById, getLastThree, interact, getTopFivePlayed, searchByKeyword } = require("../services/data");
+const { create, getAll, getById, update, deleteById, getLastThree, interact, getTopFivePlayed, searchByKeyword, getFeaturedCountries } = require("../services/data");
 const { getUserById } = require("../services/user");
 
 //TODO replace with real router according to exam description
@@ -57,6 +57,13 @@ homeRouter.post('/create', isUser(),
 homeRouter.get('/catalog', async (req, res) => {
     const posts = await getAll();
     res.json(posts);
+});
+
+homeRouter.get('/featured', async (req, res) => {
+    const featuredCoutries = await getFeaturedCountries();
+    console.log(featuredCoutries);
+    
+    res.json(featuredCoutries);
 });
 
 homeRouter.get('/id/:id', async (req, res) => {
