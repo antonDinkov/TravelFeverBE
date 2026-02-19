@@ -1,6 +1,6 @@
-const { Country } = require('../models/Country');
-const { City } = require('../models/City');
-const { POI } = require('../models/POI');
+const { Country } = require('../models/Countries');
+const { City } = require('../models/Cities');
+const { POI } = require('../models/Pois');
 
 
 function slugify(text) {

@@ -2,17 +2,54 @@ const { Router } = require("express");
 const { isUser, isOwner, hasInteracted } = require("../middlewares/guards");
 const { body, validationResult } = require("express-validator");
 const { parseError } = require("../util");
-const { create, getAll, getById, update, deleteById, getLastThree, interact, getTopFivePlayed, searchByKeyword, getFeaturedCountries } = require("../services/data");
+const { create, getAll, getById, update, deleteById, getLastThree, interact, getTopFivePlayed, searchByKeyword, getFeaturedCountries, getSearchResult } = require("../services/data");
 const { getUserById } = require("../services/user");
 
-//TODO replace with real router according to exam description
 const homeRouter = Router();
 
-homeRouter.get('/', async (req, res) => {
-    //This code creates a token and saves it in a cookie
-    //const result = await login('John', '123456');
-    //const token = createToken(result);
-    //res.cookie('token', token)
+homeRouter.get("/search", async (req, res) => {
+  try {
+    const { text, type } = req.query;
+
+    if (!text || !type) {
+      return res.status(400).json({
+        message: "Missing required query params: text and type"
+      });
+    }
+
+    if (!["country", "city", "poi"].includes(type)) {
+      return res.status(400).json({
+        message: "Invalid type. Allowed: country, city, poi"
+      });
+    }
+
+    const result = await getSearchResult(text, type);
+
+    return res.status(200).json({
+      success: true,
+      count: result.length,
+      data: result
+    });
+
+  } catch (err) {
+    console.error("Search controller error:", err);
+
+    return res.status(500).json({
+      success: false,
+      message: "Server error while searching"
+    });
+  }
+});
+
+module.exports = { homeRouter }
+
+
+
+
+
+
+
+/* homeRouter.get('/', async (req, res) => {
 
     const topFive = await getTopFivePlayed();
 
@@ -80,9 +117,9 @@ homeRouter.get('/id/:id', async (req, res) => {
     }
 
 
-})
+}) */
 
-homeRouter.get('/catalog/:id', async (req, res) => {
+/* homeRouter.get('/catalog/:id', async (req, res) => {
     try {
         const id = req.params.id;
         const post = await getById(id);
@@ -99,7 +136,7 @@ homeRouter.get('/catalog/:id', async (req, res) => {
 
         const isAuthor = req.user?._id.toString() == post.owner.toString();
 
-        const hasInteracted = Boolean(post.likes.find(id => id.toString() == req.user?._id/* _id */.toString()));
+        const hasInteracted = Boolean(post.likes.find(id => id.toString() == req.user?._id.toString()));
 
         res.json({ post, username, interactionCount, isLoggedIn, isAuthor, hasInteracted, interactorsNames, title: `Details ${post.name}` });
     } catch (error) {
@@ -155,9 +192,9 @@ homeRouter.post('/catalog/:id/edit', isOwner(),
             console.error('Edit error:', err);
             return res.status(500).json({ errors: parseError(err).errors || ['Unexpected server error.'] });
         }
-    });
+    }); */
 
-homeRouter.delete('/catalog/:id', isOwner(), async (req, res) => {
+/* homeRouter.delete('/catalog/:id', isOwner(), async (req, res) => {
     try {
         const id = req.params.id;
         const userId = req.user._id;
@@ -183,16 +220,6 @@ homeRouter.post('/catalog/:id/interact', hasInteracted(), async (req, res) => {
     }
 });
 
-/* homeRouter.post('/catalog/:id/interact', hasInteracted(), async (req, res) => {
-    try {
-        const gameInfo = await interact(req.params.id, req.body.interaction ==='likes' || req.body.interaction ==='lastPlayed' || req.body.interaction ==='played'? req.user._id : undefined , req.body.interaction);
-        res.status(200).json(gameInfo);
-    } catch (err) {
-        console.error('Error occurred: ', err);
-        res.status(400).json({ success: false, error: err.message || 'Unknown error' });
-    }
-}); */
-
 homeRouter.get('/profile', isUser(), async (req, res) => {
     const { _id, firstName, email } = req.user;
     const posts = await getAll();
@@ -203,7 +230,7 @@ homeRouter.get('/profile', isUser(), async (req, res) => {
 
     const interactedWith = posts.filter((p) => {
         const array = p.likes.map(p => p.toString());
-        return array.includes(/* _id */firstName.toString())
+        return array.includes(firstName.toString())
     });
     console.log('User has interacted with: ', interactedWith);
     const interactedWithResult = interactedWith.length > 0 ? interactedWith : null;
@@ -226,6 +253,4 @@ homeRouter.get('/search', async (req, res) => {
         console.error('Search error:', err);
         res.status(500).json({ error: 'Internal Server Error' });
     }
-});
-
-module.exports = { homeRouter }
+}); */

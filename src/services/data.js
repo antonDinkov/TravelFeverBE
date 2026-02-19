@@ -6,7 +6,6 @@ const { Poi } = require('../models/Pois');
 const { geoApi, wikiApi, unsplashApi } = require('./api');
 const { handleCountry, handleCity, handlePOI } = require('./helpers');
 
-//TODO replace with real data service according to exam description
 
 async function getAll() {
     return Data.find().lean();
