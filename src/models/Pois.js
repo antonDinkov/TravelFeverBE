@@ -20,6 +20,6 @@ const poiSchema = new Schema(
   { timestamps: true }
 );
 
-const POI = model("POI", poiSchema);
+const Poi = model("Poi", poiSchema);
 
-module.exports = { POI };
+module.exports = { Poi };

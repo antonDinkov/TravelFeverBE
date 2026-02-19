@@ -1,6 +1,10 @@
 const { Data } = require('../models/Data');
 const { User } = require('../models/User');
 const { Country } = require('../models/Countries');
+const { City } = require('../models/Cities');
+const { Poi } = require('../models/Pois');
+const { geoApi, wikiApi, unsplashApi } = require('./api');
+const { handleCountry, handleCity, handlePOI } = require('./helpers');
 
 //TODO replace with real data service according to exam description
 
@@ -9,22 +13,128 @@ async function getAll() {
 };
 
 async function getFeaturedCountries() {
-  return Country
-    .find({ featured_rank: { $exists: true } })
-    .sort({ featured_rank: 1 })
-    .lean();
+    return Country
+        .find({ featured_rank: { $exists: true } })
+        .sort({ featured_rank: 1 })
+        .lean();
+}
+
+async function getSearchResult(text, type) {
+    try {
+
+        if (!["country", "city", "poi"].includes(type)) {
+            throw new Error("Invalid search type");
+        }
+
+        let existingResults = [];
+
+        if (type === "country") {
+            existingResults = await Country.find({
+                name: { $regex: text, $options: "i" }
+            });
+        }
+
+        if (type === "city") {
+            existingResults = await City.find({
+                name: { $regex: text, $options: "i" }
+            }).populate("country");
+        }
+
+        if (type === "poi") {
+            existingResults = await Poi.find({
+                name: { $regex: text, $options: "i" }
+            }).populate({
+                path: "city",
+                populate: { path: "country" }
+            });
+        }
+
+        if (existingResults.length > 0) {
+            return existingResults;
+        }
+
+        const params = { text, limit: 10 };
+
+        if (type === "country") params.type = "country";
+        if (type === "city") params.type = "city";
+
+        const responseGeo = await geoApi.get("/geocode/search", { params });
+
+        if (!responseGeo.data.features.length) return [];
+
+        const topThree = responseGeo.data.features
+            .sort((a, b) =>
+                (b.properties.population || 0) -
+                (a.properties.population || 0)
+            )
+            .slice(0, 3);
+
+        const enrichedResults = await Promise.all(
+            topThree.map(async (item) => {
+
+                const props = item.properties;
+
+                let wikiData = null;
+
+                try {
+                    const wikiRes = await wikiApi.get(
+                        `/page/summary/${encodeURIComponent(props.formatted)}`
+                    );
+
+                    if (wikiRes.data.type !== "disambiguation") {
+                        wikiData = wikiRes.data;
+                    }
+                } catch {
+                    wikiData = null;
+                }
+
+                return {
+                    name: props.name,
+                    country: props.country,
+                    city: props.city || props.name,
+                    lat: props.lat,
+                    lon: props.lon,
+                    image: wikiData?.thumbnail?.source || "",
+                    description: wikiData?.extract || ""
+                };
+            })
+        );
+
+        let savedResults;
+
+        if (type === "country") {
+            savedResults = await Promise.all(
+                enrichedResults.map(handleCountry)
+            );
+        }
+
+        if (type === "city") {
+            savedResults = await Promise.all(
+                enrichedResults.map(handleCity)
+            );
+        }
+
+        if (type === "poi") {
+            savedResults = await Promise.all(
+                enrichedResults.map(handlePOI)
+            );
+        }
+
+        return savedResults;
+
+    } catch (err) {
+        console.log("Search error:", err);
+        throw err;
+    }
 }
 
 
-/* async function getLastThree() {
-    return Data.find().sort({ _id: -1 }).limit(3).lean(); //последните три регистрирани продукта
-}; */
 
 async function getTopFivePlayed() {
-  return Data.find()
-    .sort({ played: -1 })
-    .limit(5)
-    .lean();
+    return Data.find()
+        .sort({ played: -1 })
+        .limit(5)
+        .lean();
 }
 
 async function getById(id) {
@@ -68,7 +178,7 @@ async function update(id, userId, newData) {
     }
 
     //TODO replace with real properties
-        record.name = newData.name,
+    record.name = newData.name,
         record.manufacturer = newData.manufacturer,
         record.genre = newData.genre,
         record.image = newData.image,
@@ -76,7 +186,7 @@ async function update(id, userId, newData) {
         record.instructions = newData.instructions,
         record.description = newData.description,
 
-    await record.save();
+        await record.save();
 
     return record;
 };
@@ -103,14 +213,14 @@ async function interact(id, userId, interaction) {
         if (!userRecord.myGames.includes(id)) {
             userRecord.myGames.push(id);
         }
-    } 
+    }
     else if (interaction === 'played') {
         // Увеличаване на броя игри
         record.played = (record.played || 0) + 1;
 
         // Записване на последно играна
         userRecord.lastPlayed = id;
-    } 
+    }
     else {
         // Ако имаш други типове взаимодействия
         record[interaction] = (record[interaction] || 0) + 1;
@@ -122,46 +232,6 @@ async function interact(id, userId, interaction) {
     return record;
 }
 
-
-/* async function interact(id, userId, interactorsListName) {
-    
-    const record = await Data.findById(id);
-    console.log(userId);
-    
-    const userRecord = await User.findById(userId);
-    console.log(userRecord);
-    
-    if (!record) {
-        throw new Error("Record not found " + id);
-    };
-
-    //TODO replace with real properties
-    if (interactorsListName === 'likes') {
-        record[interactorsListName].push(userId);
-
-        const user = await User.findById(userId);
-        if (!user) {
-            throw new Error("User not found " + userId);
-        }
-
-        if (!user.myGames.includes(id)) {
-            user.myGames.push(id);
-            await user.save();
-        }
-    } else if (interactorsListName === 'played') {
-        console.log('Inside setter: ', id);
-        userRecord['lastPlayed'] = id;
-        record[interactorsListName] = (record[interactorsListName] || 0) + 1;
-    } else {
-        record[interactorsListName] = (record[interactorsListName] || 0) + 1;
-    }
-    
-    await record.save();
-    await userRecord.save();
-
-    return record;
-}
- */
 async function deleteById(id, userId) {
     const record = await Data.findById(id);
     if (!record) {
@@ -224,8 +294,8 @@ async function getMostLiked() {
 
 module.exports = {
     getAll,
-    /* getLastThree, */
     getFeaturedCountries,
+    getSearchResult,
     getTopFivePlayed,
     getById,
     getByIdKey,

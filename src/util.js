@@ -19,21 +19,6 @@ function parseError(err) {
     }
 
     return err;
-
-    /* if (err instanceof Error) {
-        if (!err.errors) {
-            // Generic error
-            return [err.message];
-        } else {
-            // Mongoose validation error
-            return Object.values(err.errors).map(e => e.message);
-        }
-    } else if (Array.isArray(err)) {
-        // express-validator errors
-        return err.map(e => e.msg);
-    }
-
-    return [err.toString()]; */
 };
 
 module.exports = { parseError };
