@@ -10,42 +10,42 @@ const homeRouter = Router();
 homeRouter.get('/featured', async (req, res) => {
     const featuredCoutries = await getFeaturedCountries();
     console.log(featuredCoutries);
-    
+
     res.json(featuredCoutries);
 });
 
 homeRouter.get("/search", async (req, res) => {
-  try {
-    const { text, type } = req.query;
+    try {
+        const { text, type } = req.query;
 
-    if (!text || !type) {
-      return res.status(400).json({
-        message: "Missing required query params: text and type"
-      });
+        if (!text || !type) {
+            return res.status(400).json({
+                message: "Missing required query params: text and type"
+            });
+        }
+
+        if (!["country", "city", "poi"].includes(type)) {
+            return res.status(400).json({
+                message: "Invalid type. Allowed: country, city, poi"
+            });
+        }
+
+        const result = await getSearchResult(text, type);
+
+        return res.status(200).json({
+            success: true,
+            count: result.length,
+            data: result
+        });
+
+    } catch (err) {
+        console.error("Search controller error:", err);
+
+        return res.status(500).json({
+            success: false,
+            message: "Server error while searching"
+        });
     }
-
-    if (!["country", "city", "poi"].includes(type)) {
-      return res.status(400).json({
-        message: "Invalid type. Allowed: country, city, poi"
-      });
-    }
-
-    const result = await getSearchResult(text, type);
-
-    return res.status(200).json({
-      success: true,
-      count: result.length,
-      data: result
-    });
-
-  } catch (err) {
-    console.error("Search controller error:", err);
-
-    return res.status(500).json({
-      success: false,
-      message: "Server error while searching"
-    });
-  }
 });
 
 module.exports = { homeRouter }

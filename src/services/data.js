@@ -73,29 +73,20 @@ async function getSearchResult(text, type) {
 
                 const props = item.properties;
 
-                let wikiData = null;
+                const cityName = props.name || props.city;
+                const wikiData = await getWikiData(cityName, props.country);
 
-                try {
-                    const wikiRes = await wikiApi.get(
-                        `/page/summary/${encodeURIComponent(props.formatted)}`
-                    );
-
-                    if (wikiRes.data.type !== "disambiguation") {
-                        wikiData = wikiRes.data;
-                    }
-                } catch {
-                    wikiData = null;
-                }
 
                 return {
-                    name: props.name,
+                    name: props.name || props.city || props.formatted,
                     country: props.country,
                     city: props.city || props.name,
                     lat: props.lat,
                     lon: props.lon,
-                    image: wikiData?.thumbnail?.source || "",
-                    description: wikiData?.extract || ""
+                    image: wikiData?.thumbnail?.source || null,
+                    description: wikiData?.extract || null
                 };
+
             })
         );
 
@@ -111,12 +102,23 @@ async function getSearchResult(text, type) {
             savedResults = await Promise.all(
                 enrichedResults.map(handleCity)
             );
+
+            return await City.find({
+                _id: { $in: savedResults.map(r => r._id) }
+            }).populate("country");
         }
 
         if (type === "poi") {
             savedResults = await Promise.all(
                 enrichedResults.map(handlePOI)
             );
+
+            return await Poi.find({
+                _id: { $in: savedResults.map(r => r._id) }
+            }).populate({
+                path: "city",
+                populate: { path: "country" }
+            });
         }
 
         return savedResults;
@@ -126,6 +128,35 @@ async function getSearchResult(text, type) {
         throw err;
     }
 }
+
+
+async function getWikiData(name, country) {
+    const queries = [
+        `${name}, ${country}`,
+        name
+    ];
+
+    for (const q of queries) {
+        try {
+            const res = await wikiApi.get(
+                `/page/summary/${encodeURIComponent(q)}`
+            );
+
+            if (
+                res.data &&
+                res.data.type !== "disambiguation"
+            ) {
+                return res.data;
+            }
+        } catch (err) {
+            continue;
+        }
+
+    }
+
+    return null;
+}
+
 
 
 

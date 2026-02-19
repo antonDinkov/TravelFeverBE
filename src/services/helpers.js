@@ -44,12 +44,16 @@ async function handleCity(data) {
         image: ""
     });
 
+    console.log("DATA IMAGE:", data.image);
+    console.log("DATA DESCRIPTION:", data.description);
+
+
     const city = await City.create({
-        name: data.name,
+        name: data.name || "Unknown",
         slug,
         country: country._id,
-        short_description: data.description || "",
-        image_url: data.image || "",
+        short_description: data.description || "No description available.",
+        image_url: data.image || "https://via.placeholder.com/600x400",
         location: {
             type: "Point",
             coordinates: [data.lon, data.lat]
