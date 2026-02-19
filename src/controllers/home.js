@@ -7,6 +7,13 @@ const { getUserById } = require("../services/user");
 
 const homeRouter = Router();
 
+homeRouter.get('/featured', async (req, res) => {
+    const featuredCoutries = await getFeaturedCountries();
+    console.log(featuredCoutries);
+    
+    res.json(featuredCoutries);
+});
+
 homeRouter.get("/search", async (req, res) => {
   try {
     const { text, type } = req.query;
@@ -96,12 +103,6 @@ homeRouter.get('/catalog', async (req, res) => {
     res.json(posts);
 });
 
-homeRouter.get('/featured', async (req, res) => {
-    const featuredCoutries = await getFeaturedCountries();
-    console.log(featuredCoutries);
-    
-    res.json(featuredCoutries);
-});
 
 homeRouter.get('/id/:id', async (req, res) => {
     try {
