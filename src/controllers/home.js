@@ -9,7 +9,6 @@ const homeRouter = Router();
 
 homeRouter.get('/featured', async (req, res) => {
     const featuredCoutries = await getFeaturedCountries();
-    console.log(featuredCoutries);
 
     res.json(featuredCoutries);
 });

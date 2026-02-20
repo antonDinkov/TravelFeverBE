@@ -3,7 +3,7 @@ const { User } = require('../models/User');
 const { Country } = require('../models/Countries');
 const { City } = require('../models/Cities');
 const { Poi } = require('../models/Pois');
-const { geoApi, wikiApi, unsplashApi } = require('./api');
+const { geoApi, wikiApi, pixabayApi } = require('./api');
 const { handleCountry, handleCity, handlePOI } = require('./helpers');
 
 
@@ -12,8 +12,10 @@ async function getAll() {
 };
 
 async function getFeaturedCountries() {
+    console.log("Inside featured ");
+    
     return Country
-        .find({ featured_rank: { $exists: true } })
+        .find({ featured_rank: { $exists: true, $gt: 0 } })
         .sort({ featured_rank: 1 })
         .lean();
 }
@@ -58,6 +60,8 @@ async function getSearchResult(text, type) {
         if (type === "city") params.type = "city";
 
         const responseGeo = await geoApi.get("/geocode/search", { params });
+        /* console.log("This is response data from geo:", responseGeo.data); */
+        
 
         if (!responseGeo.data.features.length) return [];
 
@@ -72,10 +76,17 @@ async function getSearchResult(text, type) {
             topThree.map(async (item) => {
 
                 const props = item.properties;
+                /* console.log("This is the item", item);
+                console.log("And this is the item properties",props); */
+                
+                
 
                 const cityName = props.name || props.city;
+                /* console.log("this is the city property: ", cityName); */
+                
                 const wikiData = await getWikiData(cityName, props.country);
-
+                console.log(wikiData);
+                
 
                 return {
                     name: props.name || props.city || props.formatted,
@@ -83,7 +94,7 @@ async function getSearchResult(text, type) {
                     city: props.city || props.name,
                     lat: props.lat,
                     lon: props.lon,
-                    image: wikiData?.thumbnail?.source || null,
+                    image: wikiData?.originalimage?.source || null,
                     description: wikiData?.extract || null
                 };
 

@@ -8,12 +8,12 @@ const geoApi = axios.create({
   },
 });
 
-const unsplashApi = axios.create({
-  baseURL: 'https://api.unsplash.com',
-  timeout: 10000,
-  headers: {
-    Authorization: `Client-ID ${process.env.UNSPLASH_KEY}`,
-  },
+const pixabayApi = axios.create({
+    baseURL: "https://pixabay.com/api/",
+    timeout: 10000,
+    params: {
+        key: process.env.PIXABAY_API_KEY
+    }
 });
 
 const wikiApi = axios.create({
@@ -26,6 +26,6 @@ const wikiApi = axios.create({
 
 module.exports = {
   geoApi,
-  unsplashApi,
+  pixabayApi,
   wikiApi,
 };

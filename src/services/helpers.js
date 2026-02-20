@@ -1,6 +1,6 @@
 const { Country } = require('../models/Countries');
 const { City } = require('../models/Cities');
-const { POI } = require('../models/Pois');
+const { Poi } = require('../models/Pois');
 
 
 function slugify(text) {
@@ -37,16 +37,11 @@ async function handleCity(data) {
     let existing = await City.findOne({ slug });
     if (existing) return existing;
 
-    // намираме или създаваме държавата
     const country = await handleCountry({
         name: data.country,
         description: "",
         image: ""
     });
-
-    console.log("DATA IMAGE:", data.image);
-    console.log("DATA DESCRIPTION:", data.description);
-
 
     const city = await City.create({
         name: data.name || "Unknown",
@@ -80,7 +75,7 @@ async function handlePOI(data) {
 
     if (existing) return existing;
 
-    const poi = await POI.create({
+    const poi = await Poi.create({
         name: data.name,
         city: city._id,
         short_description: data.description || "",
