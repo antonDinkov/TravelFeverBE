@@ -81,7 +81,7 @@ async function getSearchResult(text, type) {
                 
                 const wikiData = await getWikiData(cityName, props.country);
 
-                console.log("THIS IS WIKIDATA", cityName, props.country);
+                /* console.log("THIS IS WIKIDATA: ", wikiData); */
 
 
                 const pixabayResponse = await pixabayApi.get('', { params: { q: cityName } });

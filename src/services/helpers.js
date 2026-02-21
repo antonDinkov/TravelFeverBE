@@ -7,19 +7,22 @@ const { pixabayApi, wikiApi } = require('./api');
 async function handleCountry(data) {
     const slug = slugify(data.name);
 
-    let existing = await Country.find({ slug });
+    let existing = await Country.findOne({ slug });
     if (existing) return existing;
+    try {
+        const country = await Country.create({
+            name: data.name,
+            slug,
+            code: data.code || data.name.slice(0, 2).toUpperCase(),
+            short_description: data.description || "No description available.",
+            image_url: data.image || "https://via.placeholder.com/400",
+            featured_rank: 0,
+        });
 
-    const country = await Country.create({
-        name: data.name,
-        slug,
-        code: data.code || data.name.slice(0, 2).toUpperCase(),
-        short_description: data.description || "No description available.",
-        image_url: data.image || "https://via.placeholder.com/400",
-        featured_rank: 0,
-    });
-
-    return country;
+        return country;
+    } catch (err) {
+        console.log("Error cashing the country");
+    }
 }
 
 async function handleCity(data) {
@@ -117,7 +120,6 @@ async function getWikiData(name, country) {
             const res = await wikiApi.get(
                 `/page/summary/${encodeURIComponent(q)}`
             );
-            console.log("This is wiki response: ");
 
             if (res.data && res.data.type !== "disambiguation") {
                 return res.data;
