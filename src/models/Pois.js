@@ -8,7 +8,7 @@ const poiSchema = new Schema(
     },
 
     city: {
-      type: Types.ObjectId,   // ← пак Types
+      type: Types.ObjectId,
       ref: "City",
       required: true
     },

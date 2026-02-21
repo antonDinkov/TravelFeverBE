@@ -4,7 +4,7 @@ const { Country } = require('../models/Countries');
 const { City } = require('../models/Cities');
 const { Poi } = require('../models/Pois');
 const { geoApi, wikiApi, pixabayApi } = require('./api');
-const { handleCountry, handleCity, handlePOI } = require('./helpers');
+const { handleCountry, handleCity, handlePOI, normalizeCityName, getWikiData } = require('./helpers');
 
 
 async function getAll() {
@@ -13,7 +13,7 @@ async function getAll() {
 
 async function getFeaturedCountries() {
     console.log("Inside featured ");
-    
+
     return Country
         .find({ featured_rank: { $exists: true, $gt: 0 } })
         .sort({ featured_rank: 1 })
@@ -22,7 +22,6 @@ async function getFeaturedCountries() {
 
 async function getSearchResult(text, type) {
     try {
-
         if (!["country", "city", "poi"].includes(type)) {
             throw new Error("Invalid search type");
         }
@@ -55,14 +54,10 @@ async function getSearchResult(text, type) {
         }
 
         const params = { text, limit: 10 };
-
         if (type === "country") params.type = "country";
         if (type === "city") params.type = "city";
 
         const responseGeo = await geoApi.get("/geocode/search", { params });
-        /* console.log("This is response data from geo:", responseGeo.data); */
-        
-
         if (!responseGeo.data.features.length) return [];
 
         const topThree = responseGeo.data.features
@@ -71,103 +66,97 @@ async function getSearchResult(text, type) {
                 (a.properties.population || 0)
             )
             .slice(0, 3);
+        console.log("THIS IS TOP 3: ", topThree);
 
-        const enrichedResults = await Promise.all(
+        const enrichedResultsSettled = await Promise.allSettled(
             topThree.map(async (item) => {
-
                 const props = item.properties;
-                /* console.log("This is the item", item);
-                console.log("And this is the item properties",props); */
-                
-                
 
-                const cityName = props.name || props.city;
-                /* console.log("this is the city property: ", cityName); */
+                let cityName
+                if (type === 'poi') {
+                    cityName = props.name || props.city;
+                } else {
+                    cityName = normalizeCityName(type == "country" ? props.country : props.name || props.city);
+                }
                 
                 const wikiData = await getWikiData(cityName, props.country);
-                console.log(wikiData);
-                
+
+                console.log("THIS IS WIKIDATA", cityName, props.country);
+
+
+                const pixabayResponse = await pixabayApi.get('', { params: { q: cityName } });
+
+                if (type === "poi") {
+                    return {
+                        name: cityName,
+                        country: props.country,
+                        city: normalizeCityName(props.city || props.state || props.region),
+                        lat: props.lat || 0,
+                        lon: props.lon || 0,
+                        image: pixabayResponse.data.hits[0]?.webformatURL || null,
+                        description: wikiData?.extract || null
+                    };
+                }
+
 
                 return {
-                    name: props.name || props.city || props.formatted,
+                    name: normalizeCityName(props.name || props.city || props.formatted),
                     country: props.country,
-                    city: props.city || props.name,
-                    lat: props.lat,
-                    lon: props.lon,
-                    image: wikiData?.originalimage?.source || null,
+                    city: normalizeCityName(props.city || props.name),
+                    lat: props.lat || 0,
+                    lon: props.lon || 0,
+                    image: pixabayResponse.data.hits[0]?.webformatURL || null,
                     description: wikiData?.extract || null
                 };
-
             })
         );
 
-        let savedResults;
+        const enrichedResults = enrichedResultsSettled
+            .filter(r => r.status === "fulfilled")
+            .map(r => r.value);
+
+        if (!enrichedResults.length) return [];
+
+        let savedResults = [];
 
         if (type === "country") {
-            savedResults = await Promise.all(
+            savedResults = await Promise.allSettled(
                 enrichedResults.map(handleCountry)
             );
+            return savedResults.filter(r => r.status === "fulfilled").map(r => r.value);
         }
 
         if (type === "city") {
-            savedResults = await Promise.all(
+            savedResults = await Promise.allSettled(
                 enrichedResults.map(handleCity)
             );
+            const successful = savedResults.filter(r => r.status === "fulfilled").map(r => r.value);
 
             return await City.find({
-                _id: { $in: savedResults.map(r => r._id) }
+                _id: { $in: successful.map(r => r._id) }
             }).populate("country");
         }
 
         if (type === "poi") {
-            savedResults = await Promise.all(
+            savedResults = await Promise.allSettled(
                 enrichedResults.map(handlePOI)
             );
+            const successful = savedResults.filter(r => r.status === "fulfilled").map(r => r.value);
 
             return await Poi.find({
-                _id: { $in: savedResults.map(r => r._id) }
+                _id: { $in: successful.map(r => r._id) }
             }).populate({
                 path: "city",
                 populate: { path: "country" }
             });
         }
 
-        return savedResults;
-
+        return [];
     } catch (err) {
-        console.log("Search error:", err);
-        throw err;
+        console.error("Search error:", err);
+        return [];
     }
 }
-
-
-async function getWikiData(name, country) {
-    const queries = [
-        `${name}, ${country}`,
-        name
-    ];
-
-    for (const q of queries) {
-        try {
-            const res = await wikiApi.get(
-                `/page/summary/${encodeURIComponent(q)}`
-            );
-
-            if (
-                res.data &&
-                res.data.type !== "disambiguation"
-            ) {
-                return res.data;
-            }
-        } catch (err) {
-            continue;
-        }
-
-    }
-
-    return null;
-}
-
 
 
 
@@ -218,7 +207,6 @@ async function update(id, userId, newData) {
         throw new Error("Access denied");
     }
 
-    //TODO replace with real properties
     record.name = newData.name,
         record.manufacturer = newData.manufacturer,
         record.genre = newData.genre,

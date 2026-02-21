@@ -1,21 +1,13 @@
 const { Country } = require('../models/Countries');
 const { City } = require('../models/Cities');
 const { Poi } = require('../models/Pois');
-
-
-function slugify(text) {
-    return text
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, '-')
-        .replace(/(^-|-$)/g, '');
-}
+const { pixabayApi, wikiApi } = require('./api');
 
 
 async function handleCountry(data) {
     const slug = slugify(data.name);
 
-    let existing = await Country.findOne({ slug });
-
+    let existing = await Country.find({ slug });
     if (existing) return existing;
 
     const country = await Country.create({
@@ -24,69 +16,157 @@ async function handleCountry(data) {
         code: data.code || data.name.slice(0, 2).toUpperCase(),
         short_description: data.description || "No description available.",
         image_url: data.image || "https://via.placeholder.com/400",
-        featured_rank: 0
+        featured_rank: 0,
     });
 
     return country;
 }
 
-
 async function handleCity(data) {
-    const slug = slugify(data.name + '-' + data.country);
+    let country;
+    if (typeof data.country == 'string') {
+        country = data.country;
+    } else {
+        let countryObj = await Country.findById(data.country);
+        country = countryObj.name;
+    }
+    let existingCountry = await Country.findOne({ name: country });
+    if (!existingCountry) {
+        const countryWiki = await getWikiData(data.country, data.country);
+        const countryPixabay = await pixabayApi.get('', { params: { q: data.country } });
+        let countrySlug = slugify(data.country)
+        existingCountry = await handleCountry({
+            name: data.country,
+            slug: countrySlug,
+            code: data.name.slice(0, 2).toUpperCase(),
+            short_description: countryWiki?.extract || "No description for this country",
+            image_url: countryPixabay.data.hits[0]?.webformatURL || "https://via.placeholder.com/600x400",
+            featured_rank: 0,
+        });
+    }
+
+    const slug = slugify(data.name + '-' + country);
 
     let existing = await City.findOne({ slug });
     if (existing) return existing;
 
-    const country = await handleCountry({
-        name: data.country,
-        description: "",
-        image: ""
-    });
-
-    const city = await City.create({
-        name: data.name || "Unknown",
-        slug,
-        country: country._id,
-        short_description: data.description || "No description available.",
-        image_url: data.image || "https://via.placeholder.com/600x400",
-        location: {
-            type: "Point",
-            coordinates: [data.lon, data.lat]
-        }
-    });
-
-    return city;
+    try {
+        const city = await City.create({
+            name: data.name || "Unknown",
+            slug,
+            country: existingCountry._id,
+            short_description: data.description || "No description available.",
+            image_url: data.image || "https://via.placeholder.com/600x400",
+            location: {
+                type: "Point",
+                coordinates: [data.lon, data.lat]
+            }
+        });
+        return city;
+    } catch (err) {
+        console.log("This is inside handleCiti is create err: ", err);
+    }
 }
-
 
 async function handlePOI(data) {
+    const country = await Country.findOne({ name: data.country });
+    let existingCity = await City.findOne({ name: data.city, country: country._id });
 
-    const city = await handleCity({
-        name: data.city,
-        country: data.country,
-        description: "",
-        image: ""
-    });
+    if (!existingCity) {
+        const cityWiki = await getWikiData(data.city, data.country);
+        const cityPixabay = await pixabayApi.get('', { params: { q: data.city } });
 
-    let existing = await POI.findOne({
+        existingCity = await handleCity({
+            name: data.city,
+            country: country._id,
+            description: cityWiki?.extract || "No description for this city",
+            image: cityPixabay.data.hits[0]?.webformatURL || "https://via.placeholder.com/400",
+            lon: data.lon,
+            lat: data.lat,
+        });
+    }
+
+    let existing = await Poi.find({
         name: data.name,
-        city: city._id
     });
+    if (existing.length > 0) return existing;
 
-    if (existing) return existing;
-
-    const poi = await Poi.create({
-        name: data.name,
-        city: city._id,
-        short_description: data.description || "",
-        image_url: data.image || ""
-    });
-
-    return poi;
+    try {
+        const poi = await Poi.create({
+            name: data.name,
+            city: existingCity._id,
+            short_description: data.description,
+            image_url: data.image || "https://via.placeholder.com/400",
+        });
+        return poi;
+    } catch (err) {
+        console.error("Error creating POI:", err);
+        throw err;
+    }
 }
+
+async function getWikiData(name, country) {
+    const queries = [
+        `${name}, ${country}`,
+        name
+    ];
+
+    for (const q of queries) {
+        try {
+            console.log(`/page/summary/${encodeURIComponent(q)}`);
+            const res = await wikiApi.get(
+                `/page/summary/${encodeURIComponent(q)}`
+            );
+            console.log("This is wiki response: ");
+
+            if (res.data && res.data.type !== "disambiguation") {
+                return res.data;
+            }
+        } catch (err) {
+            if (err.response?.status !== 404) {
+                console.error("Wiki API error:", err.message);
+            }
+            continue;
+        }
+
+    }
+
+    return null;
+}
+
+function slugify(text) {
+    return text
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/(^-|-$)/g, '');
+}
+
+function normalizeCityName(rawName) {
+    if (!rawName) return null;
+
+    let name = rawName.trim();
+
+    const patternsToRemove = [
+        /^capital city of\s+/i,
+        /^district of\s+/i,
+        /^city of\s+/i,
+        /^town of\s+/i
+    ];
+
+    for (const pattern of patternsToRemove) {
+        name = name.replace(pattern, "");
+    }
+
+    name = name.charAt(0).toUpperCase() + name.slice(1).toLowerCase();
+
+    return name;
+}
+
 
 module.exports = {
     handleCountry,
     handleCity,
-    handlePOI
+    handlePOI,
+    normalizeCityName,
+    getWikiData,
 }

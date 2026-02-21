@@ -23,7 +23,6 @@ const countrySchema = new Schema(
     short_description: {
       type: String,
       required: true,
-      maxlength: 500
     },
 
     image_url: {

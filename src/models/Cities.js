@@ -14,7 +14,7 @@ const citySchema = new Schema(
     },
 
     country: {
-      type: Types.ObjectId,   // ← ТУК използваш Types
+      type: Types.ObjectId,
       ref: "Country",
       required: true
     },

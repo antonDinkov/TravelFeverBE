@@ -12,7 +12,9 @@ const pixabayApi = axios.create({
     baseURL: "https://pixabay.com/api/",
     timeout: 10000,
     params: {
-        key: process.env.PIXABAY_API_KEY
+        key: process.env.PIXABAY_API_KEY,
+        image_type: "phpto",
+        per_page: 3,
     }
 });
 
