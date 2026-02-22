@@ -85,7 +85,8 @@ async function getSearchResult(text, type) {
 
 
                 const pixabayResponse = await pixabayApi.get('', { params: { q: cityName } });
-
+                /* console.log(pixabayResponse.data); */
+                
                 if (type === "poi") {
                     return {
                         name: cityName,
@@ -158,6 +159,22 @@ async function getSearchResult(text, type) {
     }
 }
 
+async function interact(userId, itemId, itemModel) {
+
+    const user = await User.findById(userId);
+    if (!user) {
+        throw new Error("User not found " + userId);
+    }
+
+    user.myFavorites.push({ item: itemId, itemModel });
+    await user.save();
+
+    return user;
+}
+
+
+
+
 
 
 async function getTopFivePlayed() {
@@ -219,47 +236,6 @@ async function update(id, userId, newData) {
 
     return record;
 };
-
-
-async function interact(id, userId, interaction) {
-    const record = await Data.findById(id);
-    if (!record) {
-        throw new Error("Game not found " + id);
-    }
-
-    const userRecord = await User.findById(userId);
-    if (!userRecord) {
-        throw new Error("User not found " + userId);
-    }
-
-    if (interaction === 'likes') {
-        // Добавяне в лайкове
-        if (!record.likes.includes(userId)) {
-            record.likes.push(userId);
-        }
-
-        // Добавяне в моите игри
-        if (!userRecord.myGames.includes(id)) {
-            userRecord.myGames.push(id);
-        }
-    }
-    else if (interaction === 'played') {
-        // Увеличаване на броя игри
-        record.played = (record.played || 0) + 1;
-
-        // Записване на последно играна
-        userRecord.lastPlayed = id;
-    }
-    else {
-        // Ако имаш други типове взаимодействия
-        record[interaction] = (record[interaction] || 0) + 1;
-    }
-
-    await record.save();
-    await userRecord.save();
-
-    return record;
-}
 
 async function deleteById(id, userId) {
     const record = await Data.findById(id);

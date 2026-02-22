@@ -47,6 +47,21 @@ homeRouter.get("/search", async (req, res) => {
     }
 });
 
+
+homeRouter.post('/favorites', hasInteracted(), async (req, res) => {
+    try {
+        const favorites = await interact(
+            req.body.userId, 
+            req.body.itemId, 
+            req.body.itemModel
+        );
+        res.status(200).json(favorites);
+    } catch (err) {
+        console.error('Error occurred: ', err);
+        res.status(400).json({ success: false, error: err.message || 'Unknown error' });
+    }
+});
+
 module.exports = { homeRouter }
 
 
@@ -206,19 +221,7 @@ homeRouter.post('/catalog/:id/edit', isOwner(),
     }
 });
 
-homeRouter.post('/catalog/:id/interact', hasInteracted(), async (req, res) => {
-    try {
-        const gameInfo = await interact(
-            req.params.id, 
-            req.user._id, 
-            req.body.interaction
-        );
-        res.status(200).json(gameInfo);
-    } catch (err) {
-        console.error('Error occurred: ', err);
-        res.status(400).json({ success: false, error: err.message || 'Unknown error' });
-    }
-});
+
 
 homeRouter.get('/profile', isUser(), async (req, res) => {
     const { _id, firstName, email } = req.user;

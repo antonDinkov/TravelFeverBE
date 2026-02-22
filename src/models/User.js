@@ -31,16 +31,16 @@ const userSchema = new Schema({
         ref: 'Data',
         default: null
     },
-    myGames: [{
-        type: Types.ObjectId,
-        ref: 'Data',
-        default: []
-    }],
+    myFavorites: [{
+        item: { type: Schema.Types.ObjectId, refPath: 'myFavorites.itemModel' },
+        itemModel: { type: String, enum: ['City', 'Country', 'Poi'], required: true }
+    }]
+    ,
     loginHistory: [{
         lat: { type: Number, required: true },
         lng: { type: Number, required: true },
         date: { type: Date, default: Date.now }
-    }]
+    }],
 }, {
     collation: {
         locale: 'en',
@@ -48,8 +48,8 @@ const userSchema = new Schema({
     }
 });
 
-userSchema.methods.addLogin = async function(lat, lng) {
-    this.loginHistory.unshift({ lat, lng }); 
+userSchema.methods.addLogin = async function (lat, lng) {
+    this.loginHistory.unshift({ lat, lng });
     if (this.loginHistory.length > 5) {
         this.loginHistory = this.loginHistory.slice(0, 5);
     }
