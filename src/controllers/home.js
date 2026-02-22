@@ -2,7 +2,7 @@ const { Router } = require("express");
 const { isUser, isOwner, hasInteracted } = require("../middlewares/guards");
 const { body, validationResult } = require("express-validator");
 const { parseError } = require("../util");
-const { create, getAll, getById, update, deleteById, getLastThree, interact, getTopFivePlayed, searchByKeyword, getFeaturedCountries, getSearchResult } = require("../services/data");
+const { create, getAll, getById, update, deleteById, getLastThree, interact, getTopFivePlayed, searchByKeyword, getFeaturedCountries, getSearchResult, isItFavorite, addToFavorites, favorites } = require("../services/data");
 const { getUserById } = require("../services/user");
 
 const homeRouter = Router();
@@ -47,15 +47,45 @@ homeRouter.get("/search", async (req, res) => {
     }
 });
 
+homeRouter.get('/favorites', hasInteracted(), async (req, res) => {
+    try {
+        const typeRequest = req.query.typeRequest
+        const userId = req.query.userId;
+        const itemId = req.query.itemId;
+        
+        let favoritesVar;
+
+        if (typeRequest === 'getOne') {
+            favoritesVar = await isItFavorite( userId, itemId );
+        } else if (typeRequest === 'getAll') {
+            favoritesVar = await favorites( userId );
+        } else {
+            throw new Error("Invalid typeRequest");
+        }
+
+
+        res.status(200).json(favoritesVar);
+    } catch (err) {
+        console.error('Error occurred: ', err);
+        res.status(400).json({ success: false, error: err.message || 'Unknown error' });
+    }
+});
+
 
 homeRouter.post('/favorites', hasInteracted(), async (req, res) => {
     try {
-        const favorites = await interact(
-            req.body.userId, 
-            req.body.itemId, 
-            req.body.itemModel
-        );
-        res.status(200).json(favorites);
+        const typeRequest = req.body.typeRequest
+        const userId = req.body.userId;
+        const itemId = req.body.itemId;
+        const itemModel = req.body.itemModel;
+        let favoritesVar;
+        if (typeRequest === 'add') {
+            favoritesVar = await addToFavorites( userId, itemId, itemModel );
+        } else {
+            throw new Error("Invalid typeRequest");
+        }
+
+        res.status(200).json(favoritesVar);
     } catch (err) {
         console.error('Error occurred: ', err);
         res.status(400).json({ success: false, error: err.message || 'Unknown error' });

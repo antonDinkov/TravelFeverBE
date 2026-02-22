@@ -159,7 +159,7 @@ async function getSearchResult(text, type) {
     }
 }
 
-async function interact(userId, itemId, itemModel) {
+async function addToFavorites(userId, itemId, itemModel) {
 
     const user = await User.findById(userId);
     if (!user) {
@@ -170,7 +170,30 @@ async function interact(userId, itemId, itemModel) {
     await user.save();
 
     return user;
-}
+};
+
+async function isItFavorite(userId, itemId) {
+
+    const user = await User.findById(userId);
+    if (!user) {
+        throw new Error("User not found " + userId);
+    }
+
+    return user?.myFavorites?.some(fav => fav.item.toString() === itemId.toString()) ?? false;
+};
+
+async function favorites(userId) {
+
+    const user = await User.findById(userId);
+    if (!user) {
+        throw new Error("User not found " + userId);
+    }
+
+    const favorites = user.myFavorites;
+
+    return favorites;
+};
+
 
 
 
@@ -306,7 +329,9 @@ module.exports = {
     getByIdKey,
     create,
     update,
-    interact,
+    addToFavorites,
+    isItFavorite,
+    favorites,
     deleteById,
     searchByKeyword,
     getMostViewed,
