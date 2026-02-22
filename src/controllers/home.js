@@ -74,16 +74,11 @@ homeRouter.get('/favorites', hasInteracted(), async (req, res) => {
 
 homeRouter.post('/favorites', hasInteracted(), async (req, res) => {
     try {
-        const typeRequest = req.body.typeRequest
         const userId = req.body.userId;
         const itemId = req.body.itemId;
         const itemModel = req.body.itemModel;
-        let favoritesVar;
-        if (typeRequest === 'add') {
-            favoritesVar = await addToFavorites( userId, itemId, itemModel );
-        } else {
-            throw new Error("Invalid typeRequest");
-        }
+        
+        const favoritesVar = await addToFavorites( userId, itemId, itemModel );
 
         res.status(200).json(favoritesVar);
     } catch (err) {
