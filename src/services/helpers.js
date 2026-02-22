@@ -11,6 +11,7 @@ async function handleCountry(data) {
     if (existing) return existing;
     try {
         const country = await Country.create({
+            type: "country",
             name: data.name,
             slug,
             code: data.code || data.name.slice(0, 2).toUpperCase(),
@@ -55,6 +56,7 @@ async function handleCity(data) {
 
     try {
         const city = await City.create({
+            type: "city",
             name: data.name || "Unknown",
             slug,
             country: existingCountry._id,
@@ -96,6 +98,7 @@ async function handlePOI(data) {
 
     try {
         const poi = await Poi.create({
+            type: "poi",
             name: data.name,
             city: existingCity._id,
             short_description: data.description,

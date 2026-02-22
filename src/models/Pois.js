@@ -2,6 +2,10 @@ const { Schema, model, Types } = require('mongoose');
 
 const poiSchema = new Schema(
   {
+    type: {
+        type: String,
+        required: true
+    },
     name: {
       type: String,
       required: true
