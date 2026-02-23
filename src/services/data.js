@@ -78,7 +78,7 @@ async function getSearchResult(text, type) {
                 } else {
                     cityName = normalizeCityName(type == "country" ? props.country : props.name || props.city);
                 }
-                
+
                 const wikiData = await getWikiData(cityName, props.country);
 
                 /* console.log("THIS IS WIKIDATA: ", wikiData); */
@@ -86,7 +86,7 @@ async function getSearchResult(text, type) {
 
                 const pixabayResponse = await pixabayApi.get('', { params: { q: cityName } });
                 /* console.log(pixabayResponse.data); */
-                
+
                 if (type === "poi") {
                     return {
                         name: cityName,
@@ -190,8 +190,24 @@ async function favorites(userId) {
     }
 
     const favorites = user.myFavorites;
-
-    return favorites;
+    if (favorites.length === 0) {
+        return favorites;
+    }
+    const result = await Promise.all(
+        favorites.map(async (item) => {
+            if (item.itemModel === "country") {
+                let country = await Country.findById(item.item);
+                return country
+            } else if (item.itemModel === "city") {
+                let city = await City.findById(item.item);
+                return city
+            } else if (item.itemModel === "poi") {
+                let poi = await Poi.findById(item.item);
+                return poi
+            }
+        })
+    )
+    return result;
 };
 
 async function removeFromFavorites(userId, itemId) {
