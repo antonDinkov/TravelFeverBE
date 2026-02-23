@@ -194,6 +194,19 @@ async function favorites(userId) {
     return favorites;
 };
 
+async function removeFromFavorites(userId, itemId) {
+    const user = await User.findById(userId);
+    if (!user) {
+        throw new Error("User not found " + userId);
+    }
+
+    user.myFavorites = user.myFavorites.filter(fav => fav.item.toString() !== itemId.toString());
+    await user.save();
+
+    return user.myFavorites;
+}
+
+
 
 
 
@@ -332,6 +345,7 @@ module.exports = {
     addToFavorites,
     isItFavorite,
     favorites,
+    removeFromFavorites,
     deleteById,
     searchByKeyword,
     getMostViewed,

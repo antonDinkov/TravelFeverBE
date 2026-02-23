@@ -2,7 +2,7 @@ const { Router } = require("express");
 const { isUser, isOwner, hasInteracted } = require("../middlewares/guards");
 const { body, validationResult } = require("express-validator");
 const { parseError } = require("../util");
-const { create, getAll, getById, update, deleteById, getLastThree, interact, getTopFivePlayed, searchByKeyword, getFeaturedCountries, getSearchResult, isItFavorite, addToFavorites, favorites } = require("../services/data");
+const { create, getAll, getById, update, deleteById, getLastThree, interact, getTopFivePlayed, searchByKeyword, getFeaturedCountries, getSearchResult, isItFavorite, addToFavorites, favorites, removeFromFavorites } = require("../services/data");
 const { getUserById } = require("../services/user");
 
 const homeRouter = Router();
@@ -47,18 +47,18 @@ homeRouter.get("/search", async (req, res) => {
     }
 });
 
-homeRouter.get('/favorites', hasInteracted(), async (req, res) => {
+homeRouter.get('/favorites', async (req, res) => {
     try {
         const typeRequest = req.query.typeRequest
         const userId = req.query.userId;
         const itemId = req.query.itemId;
-        
+
         let favoritesVar;
 
         if (typeRequest === 'getOne') {
-            favoritesVar = await isItFavorite( userId, itemId );
+            favoritesVar = await isItFavorite(userId, itemId);
         } else if (typeRequest === 'getAll') {
-            favoritesVar = await favorites( userId );
+            favoritesVar = await favorites(userId);
         } else {
             throw new Error("Invalid typeRequest");
         }
@@ -72,13 +72,14 @@ homeRouter.get('/favorites', hasInteracted(), async (req, res) => {
 });
 
 
-homeRouter.post('/favorites', hasInteracted(), async (req, res) => {
+homeRouter.post('/favorites', isUser(), async (req, res) => {
     try {
         const userId = req.body.userId;
         const itemId = req.body.itemId;
         const itemModel = req.body.itemModel;
+        console.log("This is the req body content: ", userId, itemId, itemModel);
         
-        const favoritesVar = await addToFavorites( userId, itemId, itemModel );
+        const favoritesVar = await addToFavorites(userId, itemId, itemModel);
 
         res.status(200).json(favoritesVar);
     } catch (err) {
@@ -86,6 +87,19 @@ homeRouter.post('/favorites', hasInteracted(), async (req, res) => {
         res.status(400).json({ success: false, error: err.message || 'Unknown error' });
     }
 });
+
+homeRouter.delete('/favorites', async (req, res) => {
+    try {
+        const userId = req.query.userId;
+        const itemId = req.query.itemId;
+    
+        const favoritesVar = await removeFromFavorites(userId, itemId);
+        res.status(200).json(favoritesVar);
+    } catch (err) {
+        console.error('Error occurred: ', err);
+        res.status(400).json({ success: false, error: err.message || 'Unknown error' });
+    }
+})
 
 module.exports = { homeRouter }
 

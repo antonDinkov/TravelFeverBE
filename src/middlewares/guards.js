@@ -3,13 +3,13 @@ const { getById, getByIdKey } = require("../services/data");
 function isUser() {
     return function (req, res, next) {
         if (!req.user) {
-            res.redirect('/login');
+            return res.json({ message: "Unauthorized" });
         } else {
             next();
         }
     }
 };
-
+let something;
 function isGuest() {
     return function (req, res, next) {
 

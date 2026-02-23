@@ -33,7 +33,7 @@ const userSchema = new Schema({
     },
     myFavorites: [{
         item: { type: Schema.Types.ObjectId, refPath: 'myFavorites.itemModel' },
-        itemModel: { type: String, enum: ['City', 'Country', 'Poi'], required: true }
+        itemModel: { type: String, enum: ['city', 'country', 'poi'], required: true }
     }]
     ,
     loginHistory: [{
