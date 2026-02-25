@@ -11,8 +11,8 @@ userRouter.get('/register', isGuest(), (req, res) => {
     res.render('register', { title: 'Register' });
 });
 userRouter.post('/register', isGuest(),
-    body('firstName').trim().isLength({ min: 3 }).withMessage('Firstname must be atleast 3 characters long'),
-    body('lastName').trim().isLength({ min: 3 }).withMessage('Lastname must be atleast 3 characters long'),
+    body('firstName').trim().isLength({ min: 4 }).withMessage('Firstname must be atleast 3 characters long'),
+    body('lastName').trim().isLength({ min: 4 }).withMessage('Lastname must be atleast 3 characters long'),
     body('email').trim().isEmail().isLength({ min: 10 }).withMessage('Email must be atleast 10 characters long'),
     body('password').trim().isLength({ min: 4 }).withMessage('Password must be atleast 4 characters long'),
     body('repass').trim().custom((value, { req }) => value == req.body.password).withMessage('Password don\'t match'),
@@ -74,8 +74,8 @@ userRouter.post('/login',
                 token,
             });
 
-        } catch (err) {
-            const parsed = parseError(err);
+        } catch (err) {e
+            const parsed = parseError(rr);
             res.status(parsed.status || 400).json({ errors: parsed.errors });
         }
     }

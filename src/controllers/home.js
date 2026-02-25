@@ -8,13 +8,22 @@ const { getUserById } = require("../services/user");
 const homeRouter = Router();
 
 homeRouter.get('/featured', async (req, res) => {
-    const featuredCoutries = await getFeaturedCountries();
-
-    res.json(featuredCoutries);
+    try {
+        /* throw new Error("This is a mistake"); */
+        const featuredCoutries = await getFeaturedCountries();
+        res.json(featuredCoutries);
+    } catch (err) {
+        const parsed = parseError(err);
+        res.status(500).json({
+            message: parsed.message,
+            errors: parsed.errors || null
+        });
+    }
 });
 
 homeRouter.get("/search", async (req, res) => {
     try {
+        /* throw new Error("This is a mistake"); */
         const { text, type } = req.query;
 
         if (!text || !type) {
@@ -39,10 +48,11 @@ homeRouter.get("/search", async (req, res) => {
 
     } catch (err) {
         console.error("Search controller error:", err);
-
+        const parsed = parseError(err);
         return res.status(500).json({
             success: false,
-            message: "Server error while searching"
+            message: parsed.message,
+            errors: parsed.errors || null
         });
     }
 });
@@ -78,7 +88,7 @@ homeRouter.post('/favorites', isUser(), async (req, res) => {
         const itemId = req.body.itemId;
         const itemModel = req.body.itemModel;
         console.log("This is the req body content: ", userId, itemId, itemModel);
-        
+
         const favoritesVar = await addToFavorites(userId, itemId, itemModel);
 
         res.status(200).json(favoritesVar);
@@ -92,7 +102,7 @@ homeRouter.delete('/favorites', async (req, res) => {
     try {
         const userId = req.query.userId;
         const itemId = req.query.itemId;
-    
+
         const favoritesVar = await removeFromFavorites(userId, itemId);
         res.status(200).json(favoritesVar);
     } catch (err) {
