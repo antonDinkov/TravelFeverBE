@@ -1,10 +1,13 @@
 const { Router } = require("express");
 const { isUser } = require("../middlewares/guards");
-const { createTripService } = require('../services/mytrips');
+const { createTripService, getMyTripsService } = require('../services/mytrips');
 const { uploadToCloudinary } = require('../utils/cloudinaryApi');
+const multer = require('multer');
+
 
 const tripsRouter = Router();
 
+const upload = multer({ dest: 'uploads/' });
 
 async function createTrip(req, res) {
     try {
@@ -16,13 +19,13 @@ async function createTrip(req, res) {
             location
         } = req.body;
 
-        const imageFile = req.body.image;
+        const imagePath = req.file.path;
 
-        if (!imageFile) {
+        if (!imagePath) {
             return res.status(400).json({ message: "Image is required" });
         }
 
-        const uploadedImage = await uploadToCloudinary(imageFile);
+        const uploadedImage = await uploadToCloudinary(imagePath);
 
         const tripData = {
             type,
@@ -30,7 +33,8 @@ async function createTrip(req, res) {
             short_description,
             location_name,
             location,
-            image_url: uploadedImage.secure_url,
+            image_url: uploadedImage.url,
+            image_public_id: uploadedImage.public_id,
             user: req.user._id
         };
 
@@ -44,13 +48,25 @@ async function createTrip(req, res) {
     }
 }
 
-tripsRouter.get('/mytrips', isUser(), createTrip);
+tripsRouter.post('/mytrips/create', isUser(), upload.single('image'), createTrip);
 
 
+async function getMyTrips(req, res) {
+    try {
+        const userId = req.user._id;
 
-tripsRouter.post('/mytrips/create', isUser(), async (req, res) => {
+        const trips = await getMyTripsService(userId);
 
-})
+        res.status(200).json(trips);
+
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: err.message || "Unknown error" });
+    }
+}
+
+tripsRouter.get('/mytrips', isUser(), getMyTrips);
+
 
 tripsRouter.put('/mytrips/edit/:id', isUser(), async (req, res) => {
 
