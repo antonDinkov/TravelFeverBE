@@ -3,7 +3,7 @@ const { register, login, getUserById, updateUserInfo, removePicture, deleteById 
 const { isGuest, isUser } = require('../middlewares/guards');
 const { createToken } = require('../services/jwt');
 const { body, validationResult } = require('express-validator');
-const { parseError } = require('../util');
+const { parseError } = require('../utils/errorParser');
 
 const userRouter = Router();
 

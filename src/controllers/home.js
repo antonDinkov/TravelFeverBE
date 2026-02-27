@@ -1,7 +1,7 @@
 const { Router } = require("express");
 const { isUser, isOwner, hasInteracted } = require("../middlewares/guards");
 const { body, validationResult } = require("express-validator");
-const { parseError } = require("../util");
+const { parseError } = require("../utils/errorParser");
 const { create, getAll, getById, update, deleteById, getLastThree, interact, getTopFivePlayed, searchByKeyword, getFeaturedCountries, getSearchResult, isItFavorite, addToFavorites, favorites, removeFromFavorites } = require("../services/data");
 const { getUserById } = require("../services/user");
 

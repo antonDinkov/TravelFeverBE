@@ -20,6 +20,12 @@ const tripSchema = new Schema(
             type: String,
             required: true
         },
+
+        image_public_id: {
+            type: String,
+            required: true
+        },
+
         location_name: {
             type: String,
         },
