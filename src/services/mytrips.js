@@ -13,7 +13,7 @@ async function getMyTripsService(userId) {
 }
 
 
-
+// just for commit
 module.exports = {
     createTripService,
     getMyTripsService,
