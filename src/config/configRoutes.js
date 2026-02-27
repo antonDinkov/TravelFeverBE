@@ -1,5 +1,6 @@
 const { invalidPathRouter } = require("../controllers/404");
 const { homeRouter } = require("../controllers/home");
+const { tripsRouter } = require("../controllers/trips");
 const { userRouter } = require("../controllers/user");
 //TODO import routers
 
@@ -7,6 +8,7 @@ function configRoutes(app) {
     try {
         app.use(homeRouter);
         app.use(userRouter);
+        app.use(tripsRouter);
         // Health check endpoint:
         app.get('/health', (req, res) => {
             res.status(200).send('OK');

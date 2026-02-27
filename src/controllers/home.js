@@ -7,7 +7,7 @@ const { getUserById } = require("../services/user");
 
 const homeRouter = Router();
 
-homeRouter.get('/featured', async (req, res) => {
+homeRouter.get('/featured', isUser(), async (req, res) => {
     try {
         /* throw new Error("This is a mistake"); */
         const featuredCoutries = await getFeaturedCountries();
@@ -21,7 +21,7 @@ homeRouter.get('/featured', async (req, res) => {
     }
 });
 
-homeRouter.get("/search", async (req, res) => {
+homeRouter.get("/search", isUser(), async (req, res) => {
     try {
         /* throw new Error("This is a mistake"); */
         const { text, type } = req.query;
@@ -57,7 +57,7 @@ homeRouter.get("/search", async (req, res) => {
     }
 });
 
-homeRouter.get('/favorites', async (req, res) => {
+homeRouter.get('/favorites', isUser(), async (req, res) => {
     try {
         const typeRequest = req.query.typeRequest
         const userId = req.query.userId;
