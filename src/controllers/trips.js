@@ -91,7 +91,8 @@ async function updateTrip(req, res) {
 
         if (req.file) {
             const imagePath = req.file.path;
-
+            console.log("This is the image path: ", imagePath);
+            
             await deleteFromCloudinary(existingTrip.image_public_id);
 
             const uploadedImage = await uploadToCloudinary(imagePath);
