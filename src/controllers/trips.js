@@ -3,6 +3,7 @@ const { isUser } = require("../middlewares/guards");
 const { createTripService, getMyTripsService, getTripByIdService, deleteTripService, updateTripService } = require('../services/mytrips');
 const { uploadToCloudinary, deleteFromCloudinary } = require('../utils/cloudinaryApi');
 const multer = require('multer');
+const { parseError } = require("../utils/errorParser");
 
 
 const tripsRouter = Router();
@@ -47,7 +48,8 @@ async function createTrip(req, res) {
 
     } catch (err) {
         console.error(err);
-        res.status(500).json({ message: err.message || 'Unknown error' });
+        const parsedError = parseError(err);
+        res.status(500).json({ message: parsedError.message || 'Unknown error' });
     }
 }
 
@@ -117,7 +119,8 @@ async function updateTrip(req, res) {
 
     } catch (err) {
         console.error(err);
-        res.status(500).json({ message: err.message || "Unknown error" });
+        const parsedError = parseError(err);
+        res.status(500).json({ message: parsedError.message || "Unknown error" });
     }
 }
 
@@ -134,7 +137,8 @@ async function getMyTrips(req, res) {
 
     } catch (err) {
         console.error(err);
-        res.status(500).json({ message: err.message || "Unknown error" });
+        const parsedError = parseError(err);
+        res.status(500).json({ message: parsedError.message || "Unknown error" });
     }
 }
 
@@ -162,15 +166,12 @@ async function deleteTrip(req, res) {
 
     } catch (err) {
         console.error(err);
-        res.status(500).json({ message: err.message || "Unknown error" });
+        const parsedError = parseError(err);
+        res.status(500).json({ message: parsedError.message || "Unknown error" });
     }
 }
 
 tripsRouter.delete('/mytrips/:id', isUser(), deleteTrip);
-
-tripsRouter.put('/mytrips/edit/:id', isUser(), async (req, res) => {
-
-})
 
 
 
