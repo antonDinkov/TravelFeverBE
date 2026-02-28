@@ -21,7 +21,20 @@ async function deleteFromCloudinary(publicId) {
   return cloudinary.uploader.destroy(publicId, { invalidate: true });
 }
 
+
+async function uploadUserToCloudinary(file) {
+  const result = await cloudinary.uploader.upload(file, {
+    folder: "users"
+  });
+
+  return {
+    url: result.secure_url,
+    public_id: result.public_id
+  };
+}
+
 module.exports = {
     uploadToCloudinary,
     deleteFromCloudinary,
+    uploadUserToCloudinary,
 };

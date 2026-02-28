@@ -5,7 +5,6 @@ const cloudinary = require('cloudinary').v2;
 
 cloudinary.config();
 
-//TODO set identity prop name based on exam description
 const identityName = 'email';
 
 async function register(identity, firstName, lastName, password, lat, lng) {
@@ -29,20 +28,17 @@ async function register(identity, firstName, lastName, password, lat, lng) {
     try {
         await user.save();
     } catch (err) {
-        /* if (err.code == 11000) {
-            throw new Error("This firstname or lastname is already in use");
-        }; */
         throw err;
     }
 
     return user;
 };
 
-const GEO_THRESHOLD_KM = 500; // distance limit
+const GEO_THRESHOLD_KM = 500;
 
 function getDistance(lat1, lng1, lat2, lng2) {
     const toRad = x => (x * Math.PI) / 180;
-    const R = 6371; // Earth radius in km
+    const R = 6371;
     const dLat = toRad(lat2 - lat1);
     const dLng = toRad(lng2 - lng1);
     const a = Math.sin(dLat / 2) ** 2 +
@@ -90,25 +86,20 @@ async function login(identity, password, lat, lng) {
     return user;
 }
 
-/* async function login(identity, password) {
-    const user = await User.findOne({ [identityName]: identity } );
+async function updateUserService(id, data) {
+    return User.findByIdAndUpdate(
+        id,
+        data,
+        {
+            new: true,
+            runValidators: true
+        }
+    );
+}
 
-    if (!user) {
-        throw new Error(`Incorrect ${identityName} or password`);
-    };
 
-    const match = await bcrypt.compare(password, user.password);
 
-    if (!match) {
-        throw new Error(`Incorrect ${identityName} or password`);
-    };
-
-    await user.save();
-
-    return user;
-}; */
-
-async function getUserById(id) {
+/* async function getUserById(id) {
     return User.findById(id).lean();
 };
 
@@ -125,36 +116,7 @@ async function deleteById(userId) {
     await User.findByIdAndDelete(userId);
 };
 
-async function updateUserInfo(oldIdentity, newIdentity, firstName, lastName, password, picture = '', pictureId = '') {
-    console.log(oldIdentity, newIdentity, firstName, lastName, password, picture, pictureId)
-    const user = await User.findOne({ [identityName]: oldIdentity });
-    if (!user) {
-        throw new Error(`This ${identityName} does not exist`);
-    }
 
-    if (newIdentity && newIdentity !== oldIdentity) {
-        // Провери дали новия имейл вече съществува
-        const existingUser = await User.findOne({ [identityName]: newIdentity });
-        if (existingUser) {
-            throw new Error('This email is already taken');
-        }
-        user.email = newIdentity;
-    }
-
-    if (firstName) user.firstName = firstName;
-    if (lastName) user.lastName = lastName;
-    if (picture) user.picture = picture;
-    if (pictureId) user.pictureId = pictureId;
-
-    if (password) {
-        const saltRounds = 10;
-        const hashedPassword = await bcrypt.hash(password, saltRounds);
-        user.password = hashedPassword;
-    }
-
-    await user.save();
-    return user;
-}
 
 async function removePicture(identity) {
     const user = await User.findOne({ [identityName]: identity });
@@ -174,13 +136,10 @@ async function removePicture(identity) {
     console.log(user);
 
     return user;
-}
+} */
 
 module.exports = {
     register,
     login,
-    getUserById,
-    deleteById,
-    updateUserInfo,
-    removePicture
+    updateUserService,
 }
