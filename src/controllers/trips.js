@@ -54,11 +54,14 @@ async function createTrip(req, res) {
 tripsRouter.post('/mytrips/create', isUser(), upload.single('image'), createTrip);
 
 
+
 async function updateTrip(req, res) {
     try {
         const { tripId } = req.params;
-        const userId = req.user._id
+        console.log("From the controler: ", tripId);
 
+        console.log(typeof req.body.location);
+        console.log(req.body.location);
         const {
             type,
             name,
@@ -67,7 +70,13 @@ async function updateTrip(req, res) {
             location
         } = req.body;
 
-        const existingTrip = await getTripByIdService(tripId, userId);
+        let parsedLocation;
+
+        if (location) {
+            parsedLocation = JSON.parse(location);
+        }
+
+        const existingTrip = await getTripByIdService(tripId);
 
         if (!existingTrip) {
             return res.status(404).json({ message: "Trip not found" });
@@ -96,7 +105,7 @@ async function updateTrip(req, res) {
             name,
             short_description,
             location_name,
-            location,
+            location: parsedLocation,
             image_url,
             image_public_id
         };
@@ -111,7 +120,7 @@ async function updateTrip(req, res) {
     }
 }
 
-tripsRouter.put('/mytrips/:tripId', isUser(), upload.single('image'), updateTrip);
+tripsRouter.put('/mytrips/edit/:tripId', isUser(), upload.single('image'), updateTrip);
 
 
 async function getMyTrips(req, res) {

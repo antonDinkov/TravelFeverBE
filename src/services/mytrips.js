@@ -18,8 +18,10 @@ async function getMyTripsService(userId) {
         .sort({ createdAt: -1 });
 }
 
-async function getTripByIdService(tripId, userId) {
-    return Trip.findOne({ _id: tripId, user: userId });
+async function getTripByIdService(tripId) {
+    console.log("Inside the service :", tripId);
+    
+    return Trip.findOne({ _id: tripId });
 }
 
 async function deleteTripService(tripId, userId) {
