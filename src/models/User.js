@@ -26,11 +26,6 @@ const userSchema = new Schema({
         type: String,
         default: ''
     },
-    lastPlayed: {
-        type: Types.ObjectId,
-        ref: 'Data',
-        default: null
-    },
     myFavorites: [{
         item: { type: Schema.Types.ObjectId, refPath: 'myFavorites.itemModel' },
         itemModel: { type: String, enum: ['city', 'country', 'poi'], required: true }
