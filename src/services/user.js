@@ -1,9 +1,5 @@
 const { User } = require('../models/User');
 const bcrypt = require('bcrypt');
-require('dotenv').config();
-const cloudinary = require('cloudinary').v2;
-
-cloudinary.config();
 
 const identityName = 'email';
 
@@ -96,47 +92,6 @@ async function updateUserService(id, data) {
         }
     );
 }
-
-
-
-/* async function getUserById(id) {
-    return User.findById(id).lean();
-};
-
-async function deleteById(userId) {
-    const record = await User.findById(userId);
-    if (!record) {
-        throw new Error("Record not found " + userId);
-    };
-
-    if (record._id.toString() != userId) {
-        throw new Error("Access denied");
-    };
-
-    await User.findByIdAndDelete(userId);
-};
-
-
-
-async function removePicture(identity) {
-    const user = await User.findOne({ [identityName]: identity });
-    if (!user) {
-        throw new Error(`This ${identityName} does not exist`);
-    }
-
-    if (user.pictureId) {
-        console.log('Inside if for picture destroy');
-        await cloudinary.uploader.destroy(user.pictureId).then(result => console.log(result));
-    }
-
-    user.picture = ''
-    user.pictureId = '';
-
-    await user.save();
-    console.log(user);
-
-    return user;
-} */
 
 module.exports = {
     register,

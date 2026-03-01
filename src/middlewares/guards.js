@@ -10,6 +10,7 @@ function isUser() {
     }
 };
 let something;
+
 function isGuest() {
     return function (req, res, next) {
 
@@ -23,20 +24,6 @@ function isGuest() {
     }
 }
 
-/* function isGuest() {
-    return function (req, res, next) {
-        console.log("Inside isGuest");
-        
-        if (req.user) {
-            console.log("Inside isGuest if req.user", req.user);
-            res.redirect('/');
-        } else {
-            console.log("next in isGuest");
-            
-            next();
-        }
-    }
-}; */
 
 function isOwner() {
     return async function (req, res, next) {

@@ -8,7 +8,7 @@ const { parseError } = require("../utils/errorParser");
 
 const tripsRouter = Router();
 
-const upload = multer({ dest: 'uploads/' });
+const upload = multer({ storage: multer.memoryStorage() });
 
 async function createTrip(req, res) {
     try {
@@ -20,24 +20,27 @@ async function createTrip(req, res) {
             location
         } = req.body;
 
-        const imagePath = req.file.path;
+        const imageBuffer = req.file.buffer;
 
-        if (!imagePath) {
+        if (!imageBuffer) {
             return res.status(400).json({ message: "Image is required" });
         }
 
-        const uploadedImage = await uploadToCloudinary(imagePath);
+        const uploadedImage = await uploadToCloudinary(imageBuffer);
 
         const tripData = {
             type,
             name,
             short_description,
             location_name,
-            location,
             image_url: uploadedImage.url,
             image_public_id: uploadedImage.public_id,
             user: req.user._id
         };
+
+        if (location) {
+            tripData.location = JSON.parse(location);
+        }
 
         console.log("Right Bevore the createtripservice");
         const createdTrip = await createTripService(tripData);
@@ -72,11 +75,8 @@ async function updateTrip(req, res) {
             location
         } = req.body;
 
-        let parsedLocation;
-
-        if (location) {
-            parsedLocation = JSON.parse(location);
-        }
+        console.log("This is the location from the req.body: ", location);
+        
 
         const existingTrip = await getTripByIdService(tripId);
 
@@ -92,12 +92,11 @@ async function updateTrip(req, res) {
         let image_public_id = existingTrip.image_public_id;
 
         if (req.file) {
-            const imagePath = req.file.path;
-            console.log("This is the image path: ", imagePath);
-            
+            const imageBuffer = req.file.buffer;
+
             await deleteFromCloudinary(existingTrip.image_public_id);
 
-            const uploadedImage = await uploadToCloudinary(imagePath);
+            const uploadedImage = await uploadToCloudinary(imageBuffer);
 
             image_url = uploadedImage.url;
             image_public_id = uploadedImage.public_id;
@@ -108,10 +107,13 @@ async function updateTrip(req, res) {
             name,
             short_description,
             location_name,
-            location: parsedLocation,
             image_url,
             image_public_id
         };
+
+        if (location) {
+            updatedData.location = JSON.parse(location);
+        }
 
         const updatedTrip = await updateTripService(tripId, updatedData);
 

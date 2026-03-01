@@ -1,15 +1,12 @@
 const { Router } = require("express");
-const { isUser, isOwner, hasInteracted } = require("../middlewares/guards");
-const { body, validationResult } = require("express-validator");
+const { isUser } = require("../middlewares/guards");
 const { parseError } = require("../utils/errorParser");
-const { create, getAll, getById, update, deleteById, getLastThree, interact, getTopFivePlayed, searchByKeyword, getFeaturedCountries, getSearchResult, isItFavorite, addToFavorites, favorites, removeFromFavorites } = require("../services/data");
-const { getUserById } = require("../services/user");
+const { getFeaturedCountries, getSearchResult, isItFavorite, addToFavorites, favorites, removeFromFavorites } = require("../services/data");
 
 const homeRouter = Router();
 
 homeRouter.get('/featured', isUser(), async (req, res) => {
     try {
-        /* throw new Error("This is a mistake"); */
         const featuredCoutries = await getFeaturedCountries();
         res.json(featuredCoutries);
     } catch (err) {
@@ -23,7 +20,6 @@ homeRouter.get('/featured', isUser(), async (req, res) => {
 
 homeRouter.get("/search", isUser(), async (req, res) => {
     try {
-        /* throw new Error("This is a mistake"); */
         const { text, type } = req.query;
 
         if (!text || !type) {

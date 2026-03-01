@@ -9,11 +9,11 @@ function configRoutes(app) {
         app.use(homeRouter);
         app.use(userRouter);
         app.use(tripsRouter);
-        // Health check endpoint:
+        
         app.get('/health', (req, res) => {
             res.status(200).send('OK');
         });
-        //TODO register routers
+        
         app.use(invalidPathRouter);
     } catch (err) {
         console.log("Route config error:", err);

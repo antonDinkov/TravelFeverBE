@@ -2,7 +2,6 @@ require('dotenv').config();
 const express = require('express');
 const { configDatabase } = require('./config/configDatabase');
 const { configExpress } = require('./config/configExpress');
-const { configHbs } = require('./config/configHbs');
 const { configRoutes } = require('./config/configRoutes');
 
 
@@ -12,7 +11,6 @@ async function start() {
     const app = express();
 
     await configDatabase();
-    configHbs(app);
     configExpress(app);
     configRoutes(app);
     

@@ -15,7 +15,6 @@ function configExpress(app) {
     app.use(express.urlencoded({ extended: true }));
     app.use(cookieParser(secret));
     app.use(session());
-    app.use('/static', express.static('static'));
 };
 
 module.exports = { configExpress };

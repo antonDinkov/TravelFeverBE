@@ -22,7 +22,8 @@ async function handleCountry(data) {
 
         return country;
     } catch (err) {
-        console.log("Error cashing the country");
+        console.log("Error cashing the country: ", err);
+        throw err
     }
 }
 
@@ -70,6 +71,7 @@ async function handleCity(data) {
         return city;
     } catch (err) {
         console.log("This is inside handleCiti is create err: ", err);
+        throw err
     }
 }
 

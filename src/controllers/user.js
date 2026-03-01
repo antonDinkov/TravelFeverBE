@@ -6,15 +6,12 @@ const { body, validationResult } = require('express-validator');
 const { parseError } = require('../utils/errorParser');
 const multer = require('multer');
 const { User } = require('../models/User');
-const { uploadUserToCloudinary } = require('../utils/cloudinaryApi');
+const { uploadUserToCloudinary, deleteFromCloudinary } = require('../utils/cloudinaryApi');
 
 const userRouter = Router();
 
-const upload = multer({ dest: 'uploads/' });
+const upload = multer({ storage: multer.memoryStorage() });
 
-userRouter.get('/register', isGuest(), (req, res) => {
-    res.render('register', { title: 'Register' });
-});
 userRouter.post('/register', isGuest(),
     body('firstName').trim().isLength({ min: 4 }).withMessage('Firstname must be atleast 3 characters long'),
     body('lastName').trim().isLength({ min: 4 }).withMessage('Lastname must be atleast 3 characters long'),
@@ -25,7 +22,6 @@ userRouter.post('/register', isGuest(),
         try {
             const validation = validationResult(req);
             if (!validation.isEmpty()) {
-                console.log('Validation errors:', validation.array());
                 throw validation.array();
             };
 
@@ -44,17 +40,12 @@ userRouter.post('/register', isGuest(),
 
     });
 
-userRouter.get('/login', isGuest(), (req, res) => {
-    res.render('login', { title: 'Login' });
-});
 
 userRouter.post('/login',
     isGuest(),
     body('email').trim().isLength({ min: 10 }).withMessage('Email must be atleast 10 characters long'),
     body('password').trim().isLength({ min: 4 }).withMessage('Password must be atleast 4 characters long'),
     async (req, res) => {
-
-        console.log("Login route hit");
 
         try {
             const validation = validationResult(req);
@@ -66,8 +57,6 @@ userRouter.post('/login',
             const lng = req.headers['x-user-lng'];
 
             const { email, password } = req.body;
-
-            console.log(email, "and ", password);
 
             const userData = await login(email, password, lat, lng);
 
@@ -122,13 +111,13 @@ async function updateProfile(req, res) {
         let pictureId = existingUser.pictureId;
 
         if (req.file) {
-            const imagePath = req.file.path;
+            const imageBuffer = req.file.buffer;
 
             if (pictureId) {
                 await deleteFromCloudinary(pictureId);
             }
 
-            const uploadedImage = await uploadUserToCloudinary(imagePath);
+            const uploadedImage = await uploadUserToCloudinary(imageBuffer);
 
             picture = uploadedImage.url;
             pictureId = uploadedImage.public_id;
@@ -173,63 +162,3 @@ userRouter.put(
 
 
 module.exports = { userRouter };
-
-
-
-
-/* userRouter.get('/me', async (req, res) => {
-    const token = req.cookies.token;
-    if (!token) return res.status(401).json({ message: 'Unauthorized' });
-    try {
-        const userData = await getUserById(req.user._id);
-        res.json({ user: userData });
-    } catch (err) {
-        res.status(401).json({ message: 'Invalid token' });
-    }
-}) */
-
-/* userRouter.put('/profile/edit',
-    body('firstName').trim().isLength({ min: 3 }).withMessage('Firstname must be atleast 3 characters long'),
-    body('lastName').trim().isLength({ min: 3 }).withMessage('Lastname must be atleast 3 characters long'),
-    body('email').trim().isEmail().isLength({ min: 10 }).withMessage('Email must be atleast 10 characters long'),
-    body('password').trim().isLength({ min: 4 }).withMessage('Password must be atleast 4 characters long'),
-    body('repass').trim().custom((value, { req }) => value == req.body.password).withMessage('Password don\'t match'),
-    async (req, res) => {
-        const token = req.cookies.token;
-        if (!token) return res.status(401).json({ message: 'Unauthorized' });
-
-        try {
-            const userData = await updateUserInfo(req.body.oldEmail, req.body.email, req.body.firstName, req.body.lastName, req.body.password, req.body.picture, req.body.pictureId);
-            res.json({ user: userData });
-        } catch (err) {
-            res.status(401).json({ message: err.message });
-        }
-    })
-
-userRouter.put('/update/profile/remove-picture', async (req, res) => {
-    const token = req.cookies.token;
-    if (!token) return res.status(401).json({ message: 'Unauthorized' });
-
-    try {
-        const email = req.body.email;
-        console.log(email);
-
-        const user = await removePicture(email);
-        console.log(user);
-
-        res.json({ user });
-    } catch (err) {
-        res.status(400).json({ message: err.message });
-    }
-})
-
-userRouter.delete('/profile/:id', isUser(), async (req, res) => {
-    try {
-        const userId = req.user._id;
-        await deleteById(userId);
-        res.status(200).json({ success: true, message: 'Your Profile is successfully deleted' });
-    } catch (err) {
-        console.error('Error occurred: ', err);
-        res.status(400).json({ success: false, error: err.message || 'Unknown error' });
-    }
-}); */

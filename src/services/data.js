@@ -1,9 +1,8 @@
-const { Data } = require('../models/Data');
 const { User } = require('../models/User');
 const { Country } = require('../models/Countries');
 const { City } = require('../models/Cities');
 const { Poi } = require('../models/Pois');
-const { geoApi, wikiApi, pixabayApi } = require('./api');
+const { geoApi, pixabayApi } = require('./api');
 const { handleCountry, handleCity, handlePOI, normalizeCityName, getWikiData } = require('./helpers');
 
 
@@ -12,8 +11,6 @@ async function getAll() {
 };
 
 async function getFeaturedCountries() {
-    console.log("Inside featured ");
-
     return Country
         .find({ featured_rank: { $exists: true, $gt: 0 } })
         .sort({ featured_rank: 1 })
@@ -66,7 +63,6 @@ async function getSearchResult(text, type) {
                 (a.properties.population || 0)
             )
             .slice(0, 3);
-        console.log("THIS IS TOP 3: ", topThree);
 
         const enrichedResultsSettled = await Promise.allSettled(
             topThree.map(async (item) => {
@@ -81,11 +77,7 @@ async function getSearchResult(text, type) {
 
                 const wikiData = await getWikiData(cityName, props.country);
 
-                /* console.log("THIS IS WIKIDATA: ", wikiData); */
-
-
                 const pixabayResponse = await pixabayApi.get('', { params: { q: cityName } });
-                /* console.log(pixabayResponse.data); */
 
                 if (type === "poi") {
                     return {
@@ -98,7 +90,6 @@ async function getSearchResult(text, type) {
                         description: wikiData?.extract || null
                     };
                 }
-
 
                 return {
                     name: normalizeCityName(props.name || props.city || props.formatted),
@@ -222,149 +213,12 @@ async function removeFromFavorites(userId, itemId) {
     return user.myFavorites;
 }
 
-
-
-
-
-
-
-
-async function getTopFivePlayed() {
-    return Data.find()
-        .sort({ played: -1 })
-        .limit(5)
-        .lean();
-}
-
-async function getById(id) {
-    return Data.findById(id).lean();
-};
-
-async function getByIdKey(id, key) {
-    const result = await Data.findById(id).select(key).lean();
-    return result?.[key];
-};
-
-async function create(data, authorId) {
-    const record = new Data({
-        name: data.name,
-        manufacturer: data.manufacturer,
-        genre: data.genre,
-        image: data.image,
-        iframeUrl: data.iframeUrl,
-        instructions: data.instructions,
-        description: data.description,
-        likes: [],
-        views: 0,
-        played: 0,
-        owner: authorId
-    });
-
-    await record.save();
-
-    return record;
-};
-
-async function update(id, userId, newData) {
-    const record = await Data.findById(id);
-
-    if (!record) {
-        throw new Error("Record not found " + id);
-    };
-
-    if (record.owner.toString() != userId) {
-        throw new Error("Access denied");
-    }
-
-    record.name = newData.name,
-        record.manufacturer = newData.manufacturer,
-        record.genre = newData.genre,
-        record.image = newData.image,
-        record.iframeUrl = newData.iframeUrl,
-        record.instructions = newData.instructions,
-        record.description = newData.description,
-
-        await record.save();
-
-    return record;
-};
-
-async function deleteById(id, userId) {
-    const record = await Data.findById(id);
-    if (!record) {
-        throw new Error("Record not found " + id);
-    };
-
-    if (record.owner.toString() != userId) {
-        throw new Error("Access denied");
-    };
-
-    await Data.findByIdAndDelete(id);
-};
-
-async function searchByKeyword(keyword, field = 'name') {
-    const regex = new RegExp(keyword, 'i');
-    const filter = {};
-    filter[field] = { $regex: regex };
-
-    return Data.find(filter);
-}
-
-async function getMostViewed() {
-    try {
-        const results = await Data.find().sort({ views: -1 });
-        return results;
-    } catch (err) {
-        console.error('Error getting most viewed:', err);
-        throw err;
-    }
-}
-
-async function getMostPlayed() {
-    try {
-        const results = await Data.find().sort({ played: -1 });
-        return results;
-    } catch (err) {
-        console.error('Error getting most played:', err);
-        throw err;
-    }
-}
-
-async function getMostLiked() {
-    try {
-        const results = await Data.aggregate([
-            {
-                $addFields: {
-                    likesCount: { $size: '$likes' }
-                }
-            },
-            {
-                $sort: { likesCount: -1 }
-            }
-        ]);
-        return results;
-    } catch (err) {
-        console.error('Error getting most liked:', err);
-        throw err;
-    }
-}
-
 module.exports = {
     getAll,
     getFeaturedCountries,
     getSearchResult,
-    getTopFivePlayed,
-    getById,
-    getByIdKey,
-    create,
-    update,
     addToFavorites,
     isItFavorite,
     favorites,
     removeFromFavorites,
-    deleteById,
-    searchByKeyword,
-    getMostViewed,
-    getMostPlayed,
-    getMostLiked
 }

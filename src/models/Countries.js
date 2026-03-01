@@ -19,7 +19,7 @@ const countrySchema = new Schema(
     },
 
     code: {
-      type: String, // ISO code: BG, FR, IT
+      type: String,
       required: true,
       uppercase: true
     },
