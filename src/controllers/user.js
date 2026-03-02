@@ -69,7 +69,7 @@ userRouter.post('/login',
             });
 
         } catch (err) {
-            const parsed = parseError(rr);
+            const parsed = parseError(err);
             res.status(parsed.status || 400).json({ errors: parsed.errors });
         }
     }
