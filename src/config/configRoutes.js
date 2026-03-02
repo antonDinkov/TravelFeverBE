@@ -2,7 +2,6 @@ const { invalidPathRouter } = require("../controllers/404");
 const { homeRouter } = require("../controllers/home");
 const { tripsRouter } = require("../controllers/trips");
 const { userRouter } = require("../controllers/user");
-//TODO import routers
 
 function configRoutes(app) {
     try {

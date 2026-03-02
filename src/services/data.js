@@ -11,14 +11,12 @@ async function getAll() {
 };
 
 async function getFeaturedCountries(userId) {
-
-    console.log("Before futured in the service");
     
     const featuredCountries = await Country
         .find({ featured_rank: { $exists: true, $gt: 0 } })
         .sort({ featured_rank: 1 })
         .lean();
-    console.log("This is after featured");
+
     if (!userId) return featuredCountries;
 
     const user = await User
@@ -36,7 +34,6 @@ async function getFeaturedCountries(userId) {
         ...country,
         isFavorite: favoriteSet.has(country._id.toString())
     }));
-    console.log(result);
 
     return result;
 }
