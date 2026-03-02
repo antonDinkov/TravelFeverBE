@@ -1,3 +1,4 @@
+const mongoose = require("mongoose");
 const { invalidPathRouter } = require("../controllers/404");
 const { homeRouter } = require("../controllers/home");
 const { tripsRouter } = require("../controllers/trips");
