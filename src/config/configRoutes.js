@@ -14,8 +14,8 @@ function configRoutes(app) {
                 await mongoose.connection.db.admin().ping();
                 res.status(200).json({ status: 'ok' });
                 console.log("The health check passed trough");
-            } catch {
-                console.log("This is the health error");
+            } catch (err) {
+                console.log("This is the health error: ", err);
                 res.status(503).json({ status: 'db down' });
             }
         });
