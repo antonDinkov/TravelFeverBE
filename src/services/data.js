@@ -18,7 +18,7 @@ async function getFeaturedCountries(userId) {
         .find({ featured_rank: { $exists: true, $gt: 0 } })
         .sort({ featured_rank: 1 })
         .lean();
-    console.log("This is the featured: ", featuredCountries);
+    console.log("This is after featured");
     if (!userId) return featuredCountries;
 
     const user = await User
