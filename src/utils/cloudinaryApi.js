@@ -41,27 +41,3 @@ module.exports = {
     uploadToCloudinary,
     deleteFromCloudinary
 };
-
-/* async function uploadToCloudinary(file) {
-  const result = await cloudinary.uploader.upload(file, {
-    folder: "trips"
-  });
-
-  return {
-    url: result.secure_url,
-    public_id: result.public_id
-  };
-} */
-
-
-
-/* async function uploadUserToCloudinary(file) {
-  const result = await cloudinary.uploader.upload(file, {
-    folder: "users"
-  });
-
-  return {
-    url: result.secure_url,
-    public_id: result.public_id
-  };
-} */

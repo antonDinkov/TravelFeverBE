@@ -9,11 +9,16 @@ function configRoutes(app) {
         app.use(homeRouter);
         app.use(userRouter);
         app.use(tripsRouter);
-        
-        app.get('/health', (req, res) => {
-            res.status(200).send('OK');
+
+        app.get('/health', async (req, res) => {
+            try {
+                await mongoose.connection.db.admin().ping();
+                res.status(200).json({ status: 'ok' });
+            } catch {
+                res.status(503).json({ status: 'db down' });
+            }
         });
-        
+
         app.use(invalidPathRouter);
     } catch (err) {
         console.log("Route config error:", err);

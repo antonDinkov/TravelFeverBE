@@ -10,14 +10,39 @@ async function getAll() {
     return Data.find().lean();
 };
 
-async function getFeaturedCountries() {
-    return Country
+async function getFeaturedCountries(userId) {
+
+    console.log("Before futured in the service");
+    
+    const featuredCountries = await Country
         .find({ featured_rank: { $exists: true, $gt: 0 } })
         .sort({ featured_rank: 1 })
         .lean();
+    console.log("This is the featured: ", featuredCountries);
+    g
+    if (!userId) return featuredCountries;
+
+    const user = await User
+        .findById(userId)
+        .select("myFavorites")
+        .lean();
+
+    const favoriteCountryIds = user?.myFavorites
+        ?.filter(fav => fav.itemModel === "country")
+        .map(fav => fav.item.toString()) || [];
+
+    const favoriteSet = new Set(favoriteCountryIds);
+
+    const result = featuredCountries.map(country => ({
+        ...country,
+        isFavorite: favoriteSet.has(country._id.toString())
+    }));
+    console.log(result);
+
+    return result;
 }
 
-async function getSearchResult(text, type) {
+async function getSearchResult(text, type, userId) {
     try {
         if (!["country", "city", "poi"].includes(type)) {
             throw new Error("Invalid search type");
@@ -28,13 +53,13 @@ async function getSearchResult(text, type) {
         if (type === "country") {
             existingResults = await Country.find({
                 name: { $regex: text, $options: "i" }
-            });
+            }).lean();
         }
 
         if (type === "city") {
             existingResults = await City.find({
                 name: { $regex: text, $options: "i" }
-            }).populate("country");
+            }).populate("country").lean();
         }
 
         if (type === "poi") {
@@ -43,12 +68,33 @@ async function getSearchResult(text, type) {
             }).populate({
                 path: "city",
                 populate: { path: "country" }
-            });
+            }).lean();
+        }
+
+        let favoriteSet = null;
+
+        if (userId) {
+            const user = await User
+                .findById(userId)
+                .select("myFavorites")
+                .lean();
+
+            const favoriteIds = user?.myFavorites
+                ?.filter(f => f.itemModel === type)
+                .map(f => f.item.toString()) || [];
+
+            favoriteSet = new Set(favoriteIds);
         }
 
         if (existingResults.length > 0) {
-            return existingResults;
+            if (!favoriteSet) return existingResults;
+
+            return existingResults.map(item => ({
+                ...item,
+                isFavorite: favoriteSet.has(item._id.toString())
+            }));
         }
+
 
         const params = { text, limit: 10 };
         if (type === "country") params.type = "country";
@@ -115,7 +161,16 @@ async function getSearchResult(text, type) {
             savedResults = await Promise.allSettled(
                 enrichedResults.map(handleCountry)
             );
-            return savedResults.filter(r => r.status === "fulfilled").map(r => r.value);
+            const finalCountries = savedResults
+                .filter(r => r.status === "fulfilled")
+                .map(r => r.value);
+
+            if (!favoriteSet) return finalCountries;
+
+            return finalCountries.map(item => ({
+                ...item._doc || item,
+                isFavorite: favoriteSet.has(item._id.toString())
+            }));
         }
 
         if (type === "city") {
@@ -124,9 +179,16 @@ async function getSearchResult(text, type) {
             );
             const successful = savedResults.filter(r => r.status === "fulfilled").map(r => r.value);
 
-            return await City.find({
+            const cities = await City.find({
                 _id: { $in: successful.map(r => r._id) }
             }).populate("country");
+
+            if (!favoriteSet) return cities;
+
+            return cities.map(item => ({
+                ...item._doc || item,
+                isFavorite: favoriteSet.has(item._id.toString())
+            }));
         }
 
         if (type === "poi") {
@@ -135,12 +197,19 @@ async function getSearchResult(text, type) {
             );
             const successful = savedResults.filter(r => r.status === "fulfilled").map(r => r.value);
 
-            return await Poi.find({
+            const pois = await Poi.find({
                 _id: { $in: successful.map(r => r._id) }
             }).populate({
                 path: "city",
                 populate: { path: "country" }
             });
+
+            if (!favoriteSet) return pois;
+
+            return pois.map(item => ({
+                ...item._doc || item,
+                isFavorite: favoriteSet.has(item._id.toString())
+            }));
         }
 
         return [];

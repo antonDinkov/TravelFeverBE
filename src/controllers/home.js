@@ -7,7 +7,9 @@ const homeRouter = Router();
 
 homeRouter.get('/featured', isUser(), async (req, res) => {
     try {
-        const featuredCoutries = await getFeaturedCountries();
+        const userId = req.user._id;
+        const featuredCoutries = await getFeaturedCountries(userId);
+        
         res.json(featuredCoutries);
     } catch (err) {
         const parsed = parseError(err);
@@ -21,6 +23,7 @@ homeRouter.get('/featured', isUser(), async (req, res) => {
 homeRouter.get("/search", isUser(), async (req, res) => {
     try {
         const { text, type } = req.query;
+        const userId = req.user._id;
 
         if (!text || !type) {
             return res.status(400).json({
@@ -34,7 +37,9 @@ homeRouter.get("/search", isUser(), async (req, res) => {
             });
         }
 
-        const result = await getSearchResult(text, type);
+        const result = await getSearchResult(text, type, userId);
+        console.log(result);
+        
 
         return res.status(200).json({
             success: true,

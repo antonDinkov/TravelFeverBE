@@ -169,6 +169,20 @@ function normalizeCityName(rawName) {
     return name;
 }
 
+function attachFavorites(results, favorites, type) {
+
+    const favoriteIds = favorites
+        ?.filter(f => f.itemModel === type)
+        .map(f => f.item.toString()) || [];
+
+    const favoriteSet = new Set(favoriteIds);
+
+    return results.map(item => ({
+        ...item._doc || item,
+        isFavorite: favoriteSet.has(item._id.toString())
+    }));
+}
+
 
 module.exports = {
     handleCountry,
@@ -176,4 +190,5 @@ module.exports = {
     handlePOI,
     normalizeCityName,
     getWikiData,
+    attachFavorites,
 }
