@@ -19,7 +19,6 @@ async function getFeaturedCountries(userId) {
         .sort({ featured_rank: 1 })
         .lean();
     console.log("This is the featured: ", featuredCountries);
-    g
     if (!userId) return featuredCountries;
 
     const user = await User
