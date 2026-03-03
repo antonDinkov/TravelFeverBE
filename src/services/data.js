@@ -11,7 +11,7 @@ async function getAll() {
 };
 
 async function getFeaturedCountries(userId) {
-    
+
     const featuredCountries = await Country
         .find({ featured_rank: { $exists: true, $gt: 0 } })
         .sort({ featured_rank: 1 })
@@ -82,7 +82,7 @@ async function getSearchResult(text, type, userId) {
             favoriteSet = new Set(favoriteIds);
         }
 
-        if (existingResults.length >= 3) {
+        if (existingResults.length > 0) {
             if (!favoriteSet) return existingResults;
 
             return existingResults.map(item => ({
@@ -97,7 +97,10 @@ async function getSearchResult(text, type, userId) {
         if (type === "city") params.type = "city";
 
         const responseGeo = await geoApi.get("/geocode/search", { params });
-        if (!responseGeo.data.features.length) return [];
+        if (!responseGeo.data.features.length) {
+            console.log("No reponse Geo");
+            return [];
+        };
 
         const topThree = responseGeo.data.features
             .sort((a, b) =>
@@ -173,16 +176,22 @@ async function getSearchResult(text, type, userId) {
             savedResults = await Promise.allSettled(
                 enrichedResults.map(handleCity)
             );
-            const successful = savedResults.filter(r => r.status === "fulfilled").map(r => r.value);
+            const successful = savedResults
+                .filter(r => r.status === "fulfilled")
+                .flatMap(r => r.value);
+
+            const uniqueIds = [...new Set(
+                successful.map(r => r._id.toString())
+            )];
 
             const cities = await City.find({
-                _id: { $in: successful.map(r => r._id) }
-            }).populate("country");
+                _id: { $in: uniqueIds }
+            }).populate("country").lean();
 
             if (!favoriteSet) return cities;
 
             return cities.map(item => ({
-                ...item._doc || item,
+                ...item,
                 isFavorite: favoriteSet.has(item._id.toString())
             }));
         }
@@ -191,19 +200,28 @@ async function getSearchResult(text, type, userId) {
             savedResults = await Promise.allSettled(
                 enrichedResults.map(handlePOI)
             );
-            const successful = savedResults.filter(r => r.status === "fulfilled").map(r => r.value);
+
+            const successful = savedResults
+                .filter(r => r.status === "fulfilled")
+                .flatMap(r => r.value);
+
+            const uniqueIds = [...new Set(
+                successful.map(r => r._id.toString())
+            )];
 
             const pois = await Poi.find({
-                _id: { $in: successful.map(r => r._id) }
+                _id: { $in: uniqueIds }
             }).populate({
                 path: "city",
-                populate: { path: "country" }
-            });
+                populate: {
+                    path: "country"
+                }
+            }).lean();
 
             if (!favoriteSet) return pois;
 
             return pois.map(item => ({
-                ...item._doc || item,
+                ...item,
                 isFavorite: favoriteSet.has(item._id.toString())
             }));
         }

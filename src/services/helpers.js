@@ -52,8 +52,12 @@ async function handleCity(data) {
 
     const slug = slugify(data.name + '-' + country);
 
-    let existing = await City.findOne({ slug });
-    if (existing) return existing;
+    let existing = await City.find({
+        name: data.name,
+        country: existingCountry._id
+    });
+
+    if (existing.length > 0) return existing;
 
     try {
         const city = await City.findOneAndUpdate(
@@ -72,19 +76,8 @@ async function handleCity(data) {
             },
             { new: true, upsert: true }
         );
-        /* const city = await City.create({
-            type: "city",
-            name: data.name || "Unknown",
-            slug,
-            country: existingCountry._id,
-            short_description: data.description || "No description available.",
-            image_url: data.image || "https://via.placeholder.com/600x400",
-            location: {
-                type: "Point",
-                coordinates: [data.lon, data.lat]
-            }
-        }); */
-        return city;
+
+        return [city];
     } catch (err) {
         console.log("This is inside handleCiti is create err: ", err);
         throw err
@@ -92,41 +85,72 @@ async function handleCity(data) {
 }
 
 async function handlePOI(data) {
-    const country = await Country.findOne({ name: data.country });
-    let existingCity = await City.findOne({ name: data.city, country: country._id });
+
+    // 1️⃣ ДЪРЖАВА
+    let country = await Country.findOne({ name: data.country });
+
+    if (!country) {
+        country = await handleCountry({
+            name: data.country,
+            code: data.country.slice(0, 2).toUpperCase(),
+            description: "No description available.",
+            image: "https://via.placeholder.com/400"
+        });
+    }
+
+    // 2️⃣ ГРАД
+    let existingCity = await City.findOne({
+        name: data.city,
+        country: country._id
+    });
 
     if (!existingCity) {
-        const cityWiki = await getWikiData(data.city, data.country);
-        const cityPixabay = await pixabayApi.get('', { params: { q: data.city } });
-
-        existingCity = await handleCity({
+        const cities = await handleCity({
             name: data.city,
             country: country._id,
-            description: cityWiki?.extract || "No description for this city",
-            image: cityPixabay.data.hits[0]?.webformatURL || "https://via.placeholder.com/400",
+            description: data.description,
+            image: data.image,
             lon: data.lon,
             lat: data.lat,
         });
+
+        // handleCity връща масив
+        existingCity = cities[0];
     }
 
+    if (!existingCity) {
+        throw new Error("City could not be created");
+    }
+
+    // 3️⃣ POI
     let existing = await Poi.find({
-        name: data.name,
+        name: data.name.trim(),
+        city: existingCity._id
     });
-    if (existing.length > 0) return existing;
 
-    try {
-        const poi = await Poi.findOneAndUpdate({
-            type: "poi",
-            name: data.name,
-            city: existingCity._id,
-            short_description: data.description,
-            image_url: data.image || "https://via.placeholder.com/400",
-        });
-        return poi;
-    } catch (err) {
-        console.error("Error creating POI:", err);
-        throw err;
+    if (existing.length > 0) {
+        return existing;
     }
+
+    const poi = await Poi.findOneAndUpdate(
+        {
+            name: data.name.trim(),
+            city: existingCity._id
+        },
+        {
+            $set: {
+                type: "poi",
+                short_description: data.description,
+                image_url: data.image || "https://via.placeholder.com/400"
+            }
+        },
+        {
+            new: true,
+            upsert: true
+        }
+    );
+
+    return [poi];
 }
 
 async function getWikiData(name, country) {
@@ -168,7 +192,7 @@ function normalizeCityName(rawName) {
     if (!rawName) return null;
 
     let name = rawName.trim();
-
+    
     const patternsToRemove = [
         /^capital city of\s+/i,
         /^district of\s+/i,
