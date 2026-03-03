@@ -115,7 +115,7 @@ async function handlePOI(data) {
     if (existing.length > 0) return existing;
 
     try {
-        const poi = await Poi.create({
+        const poi = await Poi.findOneAndUpdate({
             type: "poi",
             name: data.name,
             city: existingCity._id,

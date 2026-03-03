@@ -82,7 +82,7 @@ async function getSearchResult(text, type, userId) {
             favoriteSet = new Set(favoriteIds);
         }
 
-        if (existingResults.length > 0) {
+        if (existingResults.length >= 3) {
             if (!favoriteSet) return existingResults;
 
             return existingResults.map(item => ({
