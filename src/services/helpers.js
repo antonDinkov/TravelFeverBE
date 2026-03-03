@@ -56,7 +56,23 @@ async function handleCity(data) {
     if (existing) return existing;
 
     try {
-        const city = await City.create({
+        const city = await City.findOneAndUpdate(
+            { slug },
+            {
+                type: "city",
+                name: data.name || "Unknown",
+                slug,
+                country: existingCountry._id,
+                short_description: data.description || "No description available.",
+                image_url: data.image || "https://via.placeholder.com/600x400",
+                location: {
+                    type: "Point",
+                    coordinates: [data.lon, data.lat]
+                }
+            },
+            { new: true, upsert: true }
+        );
+        /* const city = await City.create({
             type: "city",
             name: data.name || "Unknown",
             slug,
@@ -67,7 +83,7 @@ async function handleCity(data) {
                 type: "Point",
                 coordinates: [data.lon, data.lat]
             }
-        });
+        }); */
         return city;
     } catch (err) {
         console.log("This is inside handleCiti is create err: ", err);
