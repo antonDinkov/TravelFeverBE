@@ -42,10 +42,7 @@ async function createTrip(req, res) {
             tripData.location = JSON.parse(location);
         }
 
-        console.log("Right Bevore the createtripservice");
         const createdTrip = await createTripService(tripData);
-        console.log("Right after the createtripservice: ", createdTrip);
-
 
         res.status(201).json(createdTrip);
 
@@ -74,8 +71,6 @@ async function updateTrip(req, res) {
             location_name,
             location
         } = req.body;
-
-        console.log("This is the location from the req.body: ", location);
         
 
         const existingTrip = await getTripByIdService(tripId);

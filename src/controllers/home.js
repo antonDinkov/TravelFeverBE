@@ -38,8 +38,6 @@ homeRouter.get("/search", isUser(), async (req, res) => {
         }
 
         const result = await getSearchResult(text, type, userId);
-        console.log(result);
-        
 
         return res.status(200).json({
             success: true,
@@ -88,7 +86,6 @@ homeRouter.post('/favorites', isUser(), async (req, res) => {
         const userId = req.body.userId;
         const itemId = req.body.itemId;
         const itemModel = req.body.itemModel;
-        console.log("This is the req body content: ", userId, itemId, itemModel);
 
         const favoritesVar = await addToFavorites(userId, itemId, itemModel);
 
